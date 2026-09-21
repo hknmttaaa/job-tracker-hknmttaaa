@@ -210,7 +210,7 @@ with st.sidebar.form("add_form", clear_on_submit=True):
 # --- DASHBOARD UTAMA ---
 if not df.empty and "Hasil" in df.columns:
     if "active_view" not in st.session_state:
-    st.session_state.active_view = "ALL"
+        st.session_state.active_view = "ALL"
 
 # Cek interaksi dari klik kartu HTML
 query_params = st.query_params
