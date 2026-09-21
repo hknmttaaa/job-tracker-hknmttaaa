@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Tema Angkasa & Styling Tombol Metrik Utama
+# Custom CSS: Tema Angkasa, Ukuran Kartu Metrik Besar Kembali Seperti Semula
 st.markdown(
     """
     <style>
@@ -43,56 +43,30 @@ st.markdown(
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Styling tombol Streamlit agar bisa menyerupai Kartu Metrik Warna-Warni */
-    div.metric-all button {
-        background: linear-gradient(135deg, #2980b9, #3498db) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
-        height: auto !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        font-weight: 700 !important;
-        transition: all 0.2s ease-in-out;
-    }
-
-    div.metric-pending button {
-        background: linear-gradient(135deg, #f39c12, #d35400) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
-        height: auto !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        font-weight: 700 !important;
-        transition: all 0.2s ease-in-out;
-    }
-
-    div.metric-lolos button {
-        background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
-        height: auto !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        font-weight: 700 !important;
-        transition: all 0.2s ease-in-out;
-    }
-
+    /* Mengembalikan ukuran tinggi dan tampilan tombol kartu metrik atas agar besar seperti semula */
+    div.metric-all button,
+    div.metric-pending button,
+    div.metric-lolos button,
     div.metric-gagal button {
-        background: linear-gradient(135deg, #c0392b, #e74c3c) !important;
-        color: white !important;
+        width: 100% !important;
+        height: 95px !important;
         border: none !important;
         border-radius: 12px !important;
-        padding: 20px !important;
-        height: auto !important;
+        color: white !important;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         font-weight: 700 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
         transition: all 0.2s ease-in-out;
     }
 
-    /* Efek hover untuk tombol kartu metrik */
+    div.metric-all button { background: linear-gradient(135deg, #2980b9, #3498db) !important; }
+    div.metric-pending button { background: linear-gradient(135deg, #f39c12, #d35400) !important; }
+    div.metric-lolos button { background: linear-gradient(135deg, #27ae60, #2ecc71) !important; }
+    div.metric-gagal button { background: linear-gradient(135deg, #c0392b, #e74c3c) !important; }
+
     div[class*="metric-"] button:hover {
         transform: translateY(-2px);
         filter: brightness(1.1);
@@ -234,7 +208,7 @@ if not df.empty and "Hasil" in df.columns:
     lolos_count = len(lolos_df)
     gagal_count = len(gagal_df)
 
-    # 4 Kolom Kotak Metrik Atas (Berfungsi sebagai TOMBOL untuk MENGUBAH GRAFIK)
+    # 4 Kolom Kartu Metrik Atas (Ukurannya kembali besar dan berfungsi sebagai tombol pengubah grafik)
     mcol1, mcol2, mcol3, mcol4 = st.columns(4)
 
     with mcol1:
@@ -428,7 +402,7 @@ if not df.empty and "Hasil" in df.columns:
             .apply(lambda row: row.str.contains(search_query, case=False).any(), axis=1)
         ]
 
-    if selected_platform != "Semua" and "Nemu Loker Div" in filtered_df.columns:
+    if selected_platform != "Semua" and "Nemu Loker Di" in filtered_df.columns:
         filtered_df = filtered_df[filtered_df["Nemu Loker Di"] == selected_platform]
 
     if selected_work_type != "Semua" and "Jenis Kerja" in filtered_df.columns:
