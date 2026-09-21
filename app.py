@@ -73,7 +73,7 @@ st.markdown(
     """
     <div class="hero-container">
         <h1>🚀 Space Job Application Tracker</h1>
-        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan pop-up ringkasan dan pemantauan real-time.</p>
+        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan grafik dinamis per kategori dan pemantauan real-time.</p>
     </div>
 """,
     unsafe_allow_html=True,
@@ -100,7 +100,6 @@ try:
     sheet = client.open_by_url(sheet_url).worksheet("Sheet1")
     data = sheet.get_all_records()
     df = pd.DataFrame(data)
-    # Bersihkan nama kolom dari spasi berlebih jika ada
     df.columns = df.columns.str.strip()
 except Exception as e:
     st.error(
@@ -165,7 +164,11 @@ with st.sidebar.form("add_form", clear_on_submit=True):
 
 # --- DASHBOARD UTAMA ---
 if not df.empty and "Hasil" in df.columns:
-    # Hitung Statistik
+    # Inisialisasi Session State untuk mode grafik aktif & pop-up
+    if "active_view" not in st.session_state:
+        st.session_state.active_view = "ALL"
+
+    # Hitung Subset Data
     total_lamaran = len(df)
     pending_df = df[df["Hasil"].str.contains("PENDING|MENUNGGU", case=False, na=False)]
     lolos_df = df[df["Hasil"].str.contains("LOLOS|BERHASIL", case=False, na=False)]
@@ -226,7 +229,17 @@ if not df.empty and "Hasil" in df.columns:
         )
         btn_gagal = st.button("❌ Lihat Gagal", use_container_width=True)
 
-    # Fungsi helper untuk menampilkan dataframe secara aman berdasarkan kolom yang ada
+    # Logika Ubah Mode Grafik Saat Tombol Diklik
+    if btn_all:
+        st.session_state.active_view = "ALL"
+    elif btn_pending:
+        st.session_state.active_view = "PENDING"
+    elif btn_lolos:
+        st.session_state.active_view = "LOLOS"
+    elif btn_gagal:
+        st.session_state.active_view = "GAGAL"
+
+    # Fungsi helper untuk menampilkan dataframe secara aman
     def safe_display_df(data_frame):
         available_cols = [c for c in ["Perusahaan", "Posisi", "Tanggal Lamar", "Nemu Loker Di", "Jenis Lamaran", "Hasil"] if c in data_frame.columns]
         if available_cols:
@@ -238,7 +251,6 @@ if not df.empty and "Hasil" in df.columns:
     @st.dialog("📊 Ringkasan Keseluruhan Lamaran", width="large")
     def show_all_summary():
         st.write(f"### Total Perusahaan Dilamar: **{total_lamaran}**")
-        
         col_s1, col_s2 = st.columns(2)
         with col_s1:
             st.write("📌 **Distribusi Jenis Lamaran:**")
@@ -248,7 +260,6 @@ if not df.empty and "Hasil" in df.columns:
             st.write("💼 **Daftar Posisi yang Dilamar:**")
             if "Posisi" in df.columns:
                 st.dataframe(df["Posisi"].value_counts().reset_index(), use_container_width=True, hide_index=True)
-        
         st.write("📋 **Seluruh Data Perusahaan:**")
         safe_display_df(df)
 
@@ -276,44 +287,66 @@ if not df.empty and "Hasil" in df.columns:
         else:
             st.info("Tidak ada data lamaran yang gagal.")
 
-    # Trigger Pop-up Berdasarkan Tombol yang Ditekan
+    # Trigger Pop-up berdasarkan tombol yang ditekan
     if btn_all:
         show_all_summary()
-    if btn_pending:
+    elif btn_pending:
         show_pending_list()
-    if btn_lolos:
+    elif btn_lolos:
         show_lolos_list()
-    if btn_gagal:
+    elif btn_gagal:
         show_gagal_list()
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Grafik Analisis Distribusi
-    st.subheader("📊 Analisis & Statistik Distribusi")
+    # --- BAGIAN GRAFIK DINAMIS BERDASARKAN TOMBOL AKTIF ---
+    current_mode = st.session_state.active_view
+    if current_mode == "ALL":
+        st.subheader("📊 Analisis & Statistik Distribusi (Semua Lamaran)")
+    elif current_mode == "PENDING":
+        st.subheader("⏳ Analisis & Statistik Distribusi (Khusus Pending / Proses)")
+    elif current_mode == "LOLOS":
+        st.subheader("✅ Analisis & Statistik Distribusi (Khusus Lolos / Berhasil)")
+    elif current_mode == "GAGAL":
+        st.subheader("❌ Analisis & Statistik Distribusi (Khusus Gagal / Ditolak)")
+
     gcol1, gcol2 = st.columns(2)
 
+    # Tentukan dataset yang akan digrafikkan berdasarkan mode aktif
+    if current_mode == "PENDING":
+        active_chart_df = pending_df
+    elif current_mode == "LOLOS":
+        active_chart_df = lolos_df
+    elif current_mode == "GAGAL":
+        active_chart_df = gagal_df
+    else:
+        active_chart_df = df
+
     with gcol1:
-        fig_status = px.pie(
-            df,
-            names="Hasil",
-            title="Proporsi Status Hasil Lamaran",
-            hole=0.4,
-            color_discrete_sequence=px.colors.qualitative.Pastel,
-        )
-        fig_status.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            font_color="white",
-            plot_bgcolor="rgba(0,0,0,0)",
-            title_font_size=16,
-        )
-        st.plotly_chart(fig_status, use_container_width=True)
+        if not active_chart_df.empty and "Hasil" in active_chart_df.columns:
+            fig_status = px.pie(
+                active_chart_df,
+                names="Hasil",
+                title=f"Proporsi Status ({current_mode})",
+                hole=0.4,
+                color_discrete_sequence=px.colors.qualitative.Pastel,
+            )
+            fig_status.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                font_color="white",
+                plot_bgcolor="rgba(0,0,0,0)",
+                title_font_size=16,
+            )
+            st.plotly_chart(fig_status, use_container_width=True)
+        else:
+            st.info(f"Tidak ada data untuk kategori {current_mode}.")
 
     with gcol2:
-        if "Nemu Loker Di" in df.columns:
+        if not active_chart_df.empty and "Nemu Loker Di" in active_chart_df.columns:
             fig_platform = px.bar(
-                df,
+                active_chart_df,
                 x="Nemu Loker Di",
-                title="Sumber Platform Loker Terfavorit",
+                title=f"Sumber Platform Loker ({current_mode})",
                 color="Nemu Loker Di",
                 color_discrete_sequence=px.colors.qualitative.Bold,
             )
@@ -325,6 +358,8 @@ if not df.empty and "Hasil" in df.columns:
                 showlegend=False,
             )
             st.plotly_chart(fig_platform, use_container_width=True)
+        else:
+            st.info(f"Tidak ada data platform untuk kategori {current_mode}.")
 
     st.markdown("---")
 
