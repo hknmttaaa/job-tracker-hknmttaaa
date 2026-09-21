@@ -209,121 +209,176 @@ with st.sidebar.form("add_form", clear_on_submit=True):
 
 # --- DASHBOARD UTAMA ---
 if not df.empty and "Hasil" in df.columns:
-    if "active_view" not in st.session_state:
+    # Inisialisasi session state untuk mode grafik aktif
+if "active_view" not in st.session_state:
+    st.session_state.active_view = "ALL"
+
+# CSS Super Spesifik untuk Memaksa Warna Tombol Streamlit Tanpa Refresh Tab
+st.markdown(
+    """
+    <style>
+    /* Styling khusus tombol metrik agar persis kartu HTML berwarna */
+    div[data-testid="column"] button.metric-card-all {
+        background: linear-gradient(135deg, #3498db, #2980b9) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 14px !important;
+        height: 110px !important;
+        width: 100% !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        font-weight: 700 !important;
+        font-size: 16px !important;
+    }
+    div[data-testid="column"] button.metric-card-pending {
+        background: linear-gradient(135deg, #f39c12, #d35400) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 14px !important;
+        height: 110px !important;
+        width: 100% !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        font-weight: 700 !important;
+        font-size: 16px !important;
+    }
+    div[data-testid="column"] button.metric-card-lolos {
+        background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 14px !important;
+        height: 110px !important;
+        width: 100% !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        font-weight: 700 !important;
+        font-size: 16px !important;
+    }
+    div[data-testid="column"] button.metric-card-gagal {
+        background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 14px !important;
+        height: 110px !important;
+        width: 100% !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        font-weight: 700 !important;
+        font-size: 16px !important;
+    }
+
+    div[data-testid="column"] button[class*="metric-card-"]:hover {
+        transform: translateY(-3px);
+        filter: brightness(1.15);
+        color: white !important;
+    }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
+
+# 4 Kolom Kartu Metrik Interaktif (Langsung Ubah Grafik Tanpa Refresh Browser)
+mcol1, mcol2, mcol3, mcol4 = st.columns(4)
+
+with mcol1:
+    if st.button(
+        f"TOTAL LAMARAN\n\n{total_lamaran}",
+        key="btn_all",
+        use_container_width=True,
+    ):
         st.session_state.active_view = "ALL"
-
-    # Cek interaksi dari klik kartu HTML
-    query_params = st.query_params
-    if "set_view" in query_params:
-        st.session_state.active_view = query_params["set_view"]
-
-    current_mode = st.session_state.active_view
-
-    total_lamaran = len(df)
-    pending_df = df[
-        df["Hasil"].str.contains("PENDING|MENUNGGU", case=False, na=False)
-    ]
-    lolos_df = df[
-        df["Hasil"].str.contains("LOLOS|BERHASIL", case=False, na=False)
-    ]
-    gagal_df = df[
-        df["Hasil"].str.contains("TIDAK LOLOS|GAGAL", case=False, na=False)
-    ]
-
-    pending_count = len(pending_df)
-    lolos_count = len(lolos_df)
-    gagal_count = len(gagal_df)
-
-    # CSS Khusus Kartu Metrik Estetik & Berwarna
+    # Inject kelas CSS khusus ke elemen tombol terdekat
     st.markdown(
         """
-        <style>
-        .metric-grid {
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        .metric-box {
-            flex: 1;
-            padding: 20px;
-            border-radius: 14px;
-            color: white;
-            text-align: center;
-            text-decoration: none !important;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-            transition: transform 0.2s ease, filter 0.2s ease;
-            display: block;
-        }
-        .metric-box:hover {
-            transform: translateY(-3px);
-            filter: brightness(1.15);
-            color: white !important;
-        }
-        .box-all { background: linear-gradient(135deg, #3498db, #2980b9); }
-        .box-pending { background: linear-gradient(135deg, #f39c12, #d35400); }
-        .box-lolos { background: linear-gradient(135deg, #2ecc71, #27ae60); }
-        .box-gagal { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-        
-        .box-title {
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-        .box-value {
-            font-size: 26px;
-            font-weight: 800;
-        }
-        </style>
+        <script>
+        var buttons = document.querySelectorAll('button');
+        buttons.forEach(function(btn) {
+            if (btn.innerText.includes('TOTAL LAMARAN')) {
+                btn.className += ' metric-card-all';
+            }
+        });
+        </script>
     """,
         unsafe_allow_html=True,
     )
 
-    # Render Kotak Warna-warni (Klik untuk mengubah grafik)
+with mcol2:
+    if st.button(
+        f"PENDING / PROSES\n\n{pending_count}",
+        key="btn_pending",
+        use_container_width=True,
+    ):
+        st.session_state.active_view = "PENDING"
     st.markdown(
-        f"""
-        <div class="metric-grid">
-            <a href="?set_view=ALL" target="_self" class="metric-box box-all">
-                <div class="box-title">TOTAL LAMARAN</div>
-                <div class="box-value">{total_lamaran}</div>
-            </a>
-            <a href="?set_view=PENDING" target="_self" class="metric-box box-pending">
-                <div class="box-title">PENDING / PROSES</div>
-                <div class="box-value">{pending_count}</div>
-            </a>
-            <a href="?set_view=LOLOS" target="_self" class="metric-box box-lolos">
-                <div class="box-title">LOLOS / BERHASIL</div>
-                <div class="box-value">{lolos_count}</div>
-            </a>
-            <a href="?set_view=GAGAL" target="_self" class="metric-box box-gagal">
-                <div class="box-title">GAGAL / DITOLAK</div>
-                <div class="box-value">{gagal_count}</div>
-            </a>
-        </div>
+        """
+        <script>
+        var buttons = document.querySelectorAll('button');
+        buttons.forEach(function(btn) {
+            if (btn.innerText.includes('PENDING / PROSES')) {
+                btn.className += ' metric-card-pending';
+            }
+        });
+        </script>
     """,
         unsafe_allow_html=True,
     )
 
-    # Tombol kecil di bawahnya khusus untuk memunculkan pop-up detail data
-    pcol1, pcol2, pcol3, pcol4 = st.columns(4)
-    with pcol1:
-        popup_all = st.button(
-            "📁 Detail Semua", use_container_width=True, key="pop_all"
-        )
-    with pcol2:
-        popup_pending = st.button(
-            "⏳ Detail Pending", use_container_width=True, key="pop_pen"
-        )
-    with pcol3:
-        popup_lolos = st.button(
-            "✅ Detail Lolos", use_container_width=True, key="pop_lol"
-        )
-    with pcol4:
-        popup_gagal = st.button(
-            "❌ Detail Gagal", use_container_width=True, key="pop_gag"
-        )
+with mcol3:
+    if st.button(
+        f"LOLOS / BERHASIL\n\n{lolos_count}",
+        key="btn_lolos",
+        use_container_width=True,
+    ):
+        st.session_state.active_view = "LOLOS"
+    st.markdown(
+        """
+        <script>
+        var buttons = document.querySelectorAll('button');
+        buttons.forEach(function(btn) {
+            if (btn.innerText.includes('LOLOS / BERHASIL')) {
+                btn.className += ' metric-card-lolos';
+            }
+        });
+        </script>
+    """,
+        unsafe_allow_html=True,
+    )
+
+with mcol4:
+    if st.button(
+        f"GAGAL / DITOLAK\n\n{gagal_count}",
+        key="btn_gagal",
+        use_container_width=True,
+    ):
+        st.session_state.active_view = "GAGAL"
+    st.markdown(
+        """
+        <script>
+        var buttons = document.querySelectorAll('button');
+        buttons.forEach(function(btn) {
+            if (btn.innerText.includes('GAGAL / DITOLAK')) {
+                btn.className += ' metric-card-gagal';
+            }
+        });
+        </script>
+    """,
+        unsafe_allow_html=True,
+    )
+
+current_mode = st.session_state.active_view
+
+# Tombol kecil di bawahnya khusus untuk memunculkan pop-up detail data
+pcol1, pcol2, pcol3, pcol4 = st.columns(4)
+with pcol1:
+    popup_all = st.button("📁 Detail Semua", use_container_width=True, key="pop_all")
+with pcol2:
+    popup_pending = st.button(
+        "⏳ Detail Pending", use_container_width=True, key="pop_pen"
+    )
+with pcol3:
+    popup_lolos = st.button(
+        "✅ Detail Lolos", use_container_width=True, key="pop_lol"
+    )
+with pcol4:
+    popup_gagal = st.button(
+        "❌ Detail Gagal", use_container_width=True, key="pop_gag"
+    )
 
 
     def safe_display_df(data_frame):
