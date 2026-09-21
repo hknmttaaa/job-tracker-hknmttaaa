@@ -210,51 +210,103 @@ with st.sidebar.form("add_form", clear_on_submit=True):
 # --- DASHBOARD UTAMA ---
 if not df.empty and "Hasil" in df.columns:
     if "active_view" not in st.session_state:
-        st.session_state.active_view = "ALL"
+    st.session_state.active_view = "ALL"
 
-    total_lamaran = len(df)
-    pending_df = df[df["Hasil"].str.contains("PENDING|MENUNGGU", case=False, na=False)]
-    lolos_df = df[df["Hasil"].str.contains("LOLOS|BERHASIL", case=False, na=False)]
-    gagal_df = df[df["Hasil"].str.contains("TIDAK LOLOS|GAGAL", case=False, na=False)]
+# Cek interaksi dari klik kartu HTML
+query_params = st.query_params
+if "set_view" in query_params:
+    st.session_state.active_view = query_params["set_view"]
 
-    pending_count = len(pending_df)
-    lolos_count = len(lolos_df)
-    gagal_count = len(gagal_df)
+current_mode = st.session_state.active_view
 
-    # 4 Kolom Kartu Metrik Utama di Atas (Berfungsi Mengubah Grafik & Sesuai Warna Pilihanmu)
-    mcol1, mcol2, mcol3, mcol4 = st.columns(4)
+# CSS Khusus Kartu Metrik Estetik & Berwarna
+st.markdown(
+    """
+    <style>
+    .metric-grid {
+        display: flex;
+        gap: 15px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    .metric-box {
+        flex: 1;
+        padding: 20px;
+        border-radius: 14px;
+        color: white;
+        text-align: center;
+        text-decoration: none !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        transition: transform 0.2s ease, filter 0.2s ease;
+        display: block;
+    }
+    .metric-box:hover {
+        transform: translateY(-3px);
+        filter: brightness(1.15);
+        color: white !important;
+    }
+    .box-all { background: linear-gradient(135deg, #3498db, #2980b9); }
+    .box-pending { background: linear-gradient(135deg, #f39c12, #d35400); }
+    .box-lolos { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+    .box-gagal { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    
+    .box-title {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+    }
+    .box-value {
+        font-size: 26px;
+        font-weight: 800;
+    }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
 
-    with mcol1:
-        st.markdown('<div class="metric-all">', unsafe_allow_html=True)
-        btn_chart_all = st.button(
-            f"TOTAL LAMARAN\n\n{total_lamaran}", key="c_all", use_container_width=True
-        )
-        st.markdown("</div>", unsafe_allow_html=True)
-        popup_all = st.button("📁 Lihat Semua", use_container_width=True)
+# Render Kotak Warna-warni (Klik ini untuk mengubah grafik)
+st.markdown(
+    f"""
+    <div class="metric-grid">
+        <a href="?set_view=ALL" target="_self" class="metric-box box-all">
+            <div class="box-title">TOTAL LAMARAN</div>
+            <div class="box-value">{total_lamaran}</div>
+        </a>
+        <a href="?set_view=PENDING" target="_self" class="metric-box box-pending">
+            <div class="box-title">PENDING / PROSES</div>
+            <div class="box-value">{pending_count}</div>
+        </a>
+        <a href="?set_view=LOLOS" target="_self" class="metric-box box-lolos">
+            <div class="box-title">LOLOS / BERHASIL</div>
+            <div class="box-value">{lolos_count}</div>
+        </a>
+        <a href="?set_view=GAGAL" target="_self" class="metric-box box-gagal">
+            <div class="box-title">GAGAL / DITOLAK</div>
+            <div class="box-value">{gagal_count}</div>
+        </a>
+    </div>
+""",
+    unsafe_allow_html=True,
+)
 
-    with mcol2:
-        st.markdown('<div class="metric-pending">', unsafe_allow_html=True)
-        btn_chart_pending = st.button(
-            f"PENDING / PROSES\n\n{pending_count}", key="c_pen", use_container_width=True
-        )
-        st.markdown("</div>", unsafe_allow_html=True)
-        popup_pending = st.button("⏳ Lihat Pending", use_container_width=True)
-
-    with mcol3:
-        st.markdown('<div class="metric-lolos">', unsafe_allow_html=True)
-        btn_chart_lolos = st.button(
-            f"LOLOS / BERHASIL\n\n{lolos_count}", key="c_lol", use_container_width=True
-        )
-        st.markdown("</div>", unsafe_allow_html=True)
-        popup_lolos = st.button("✅ Lihat Lolos", use_container_width=True)
-
-    with mcol4:
-        st.markdown('<div class="metric-gagal">', unsafe_allow_html=True)
-        btn_chart_gagal = st.button(
-            f"GAGAL / DITOLAK\n\n{gagal_count}", key="c_gag", use_container_width=True
-        )
-        st.markdown("</div>", unsafe_allow_html=True)
-        popup_gagal = st.button("❌ Lihat Gagal", use_container_width=True)
+# Tombol kecil di bawahnya khusus untuk memunculkan pop-up detail data
+pcol1, pcol2, pcol3, pcol4 = st.columns(4)
+with pcol1:
+    popup_all = st.button("📁 Detail Semua", use_container_width=True, key="pop_all")
+with pcol2:
+    popup_pending = st.button(
+        "⏳ Detail Pending", use_container_width=True, key="pop_pen"
+    )
+with pcol3:
+    popup_lolos = st.button(
+        "✅ Detail Lolos", use_container_width=True, key="pop_lol"
+    )
+with pcol4:
+    popup_gagal = st.button(
+        "❌ Detail Gagal", use_container_width=True, key="pop_gag"
+    )
 
     # Logika Ubah Grafik Berdasarkan Tombol Kartu Atas
     if btn_chart_all:
