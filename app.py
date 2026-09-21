@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Tema Angkasa Modern, Animasi Halus, Font Interaktif, & Card Warna-Warni
+# Custom CSS: Tema Angkasa Modern, Kartu Interaktif, & Efek Glassmorphism
 st.markdown(
     """
     <style>
@@ -27,7 +27,6 @@ st.markdown(
         color: #f8f9fa;
     }
 
-    /* Efek Animasi & Glassmorphism untuk Header / Container */
     .hero-container {
         background: rgba(28, 37, 65, 0.7);
         backdrop-filter: blur(10px);
@@ -44,51 +43,21 @@ st.markdown(
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Styling Kartu Metrik Warna-Warni Berbeda */
-    .metric-card-pending {
-        background: linear-gradient(135deg, #f39c12, #d35400);
+    /* Styling Kartu Metrik Interaktif */
+    .metric-card {
         padding: 20px;
         border-radius: 12px;
         color: white;
         text-align: center;
-        box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
-        transition: transform 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        margin-bottom: 10px;
     }
-    .metric-card-pending:hover { transform: translateY(-5px); }
-
-    .metric-card-success {
-        background: linear-gradient(135deg, #27ae60, #2ecc71);
-        padding: 20px;
-        border-radius: 12px;
-        color: white;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
-        transition: transform 0.3s ease;
+    .metric-card:hover { 
+        transform: translateY(-5px); 
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
     }
-    .metric-card-success:hover { transform: translateY(-5px); }
-
-    .metric-card-danger {
-        background: linear-gradient(135deg, #c0392b, #e74c3c);
-        padding: 20px;
-        border-radius: 12px;
-        color: white;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(192, 57, 43, 0.4);
-        transition: transform 0.3s ease;
-    }
-    .metric-card-danger:hover { transform: translateY(-5px); }
-
-    .metric-card-total {
-        background: linear-gradient(135deg, #2980b9, #3498db);
-        padding: 20px;
-        border-radius: 12px;
-        color: white;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(41, 128, 185, 0.4);
-        transition: transform 0.3s ease;
-    }
-    .metric-card-total:hover { transform: translateY(-5px); }
-
+    
     .metric-value {
         font-size: 28px;
         font-weight: 700;
@@ -105,12 +74,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Header Utama dengan gaya Glassmorphism
+# Header Utama
 st.markdown(
     """
     <div class="hero-container">
         <h1>🚀 Space Job Application Tracker</h1>
-        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier dan pemantauan progres lamaran kerja secara real-time langsung dari Google Sheets.</p>
+        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan filter dinamis dan pemantauan real-time.</p>
     </div>
 """,
     unsafe_allow_html=True,
@@ -143,7 +112,7 @@ except Exception as e:
     )
     df = pd.DataFrame()
 
-# Sidebar Interaktif untuk Input Data Baru (Create)
+# Sidebar untuk Input Data Baru
 st.sidebar.markdown("<h2>📝 Panel Input Loker</h2>", unsafe_allow_html=True)
 with st.sidebar.form("add_form", clear_on_submit=True):
     sosmed = st.text_input("Sosial Media Perusahaan")
@@ -200,7 +169,7 @@ with st.sidebar.form("add_form", clear_on_submit=True):
 
 # --- DASHBOARD UTAMA ---
 if not df.empty:
-    # Hitung Statistik untuk Kartu Berwarna
+    # Hitung Statistik
     total_lamaran = len(df)
     pending_count = len(
         df[df["Hasil"].str.contains("PENDING|MENUNGGU", case=False, na=False)]
@@ -216,58 +185,69 @@ if not df.empty:
         df[df["Hasil"].str.contains("TIDAK LOLOS|GAGAL", case=False, na=False)]
     )
 
-    # Tampilkan Kartu Metrik Warna-Warni Berbeda
+    # Inisialisasi session state untuk filter klik metrik
+    if "selected_status_filter" not in st.session_state:
+        st.session_state.selected_status_filter = "Semua"
+
+    # Tampilkan Kartu Metrik dengan tombol interaktif di bawahnya
     mcol1, mcol2, mcol3, mcol4 = st.columns(4)
 
     with mcol1:
         st.markdown(
             f"""
-            <div class="metric-card-total">
+            <div class="metric-card" style="background: linear-gradient(135deg, #2980b9, #3498db);">
                 <div class="metric-label">Total Lamaran</div>
                 <div class="metric-value">{total_lamaran}</div>
             </div>
         """,
             unsafe_allow_html=True,
         )
+        if st.button("📁 Lihat Semua", use_container_width=True):
+            st.session_state.selected_status_filter = "Semua"
 
     with mcol2:
         st.markdown(
             f"""
-            <div class="metric-card-pending">
+            <div class="metric-card" style="background: linear-gradient(135deg, #f39c12, #d35400);">
                 <div class="metric-label">Pending / Proses</div>
                 <div class="metric-value">{pending_count}</div>
             </div>
         """,
             unsafe_allow_html=True,
         )
+        if st.button("⏳ Lihat Pending", use_container_width=True):
+            st.session_state.selected_status_filter = "PENDING"
 
     with mcol3:
         st.markdown(
             f"""
-            <div class="metric-card-success">
+            <div class="metric-card" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
                 <div class="metric-label">Lolos / Berhasil</div>
                 <div class="metric-value">{lolos_count}</div>
             </div>
         """,
             unsafe_allow_html=True,
         )
+        if st.button("✅ Lihat Lolos", use_container_width=True):
+            st.session_state.selected_status_filter = "LOLOS"
 
     with mcol4:
         st.markdown(
             f"""
-            <div class="metric-card-danger">
+            <div class="metric-card" style="background: linear-gradient(135deg, #c0392b, #e74c3c);">
                 <div class="metric-label">Gagal / Ditolak</div>
                 <div class="metric-value">{gagal_count}</div>
             </div>
         """,
             unsafe_allow_html=True,
         )
+        if st.button("❌ Lihat Gagal", use_container_width=True):
+            st.session_state.selected_status_filter = "GAGAL"
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Bagian Filter & Visualisasi Grafik Interaktif yang Luas
+    # Grafik Analisis Distribusi
     st.subheader("📊 Analisis & Statistik Distribusi")
-
     gcol1, gcol2 = st.columns(2)
 
     with gcol1:
@@ -307,21 +287,58 @@ if not df.empty:
 
     st.markdown("---")
 
-    # Fitur Pencarian / Filter Data Tabel
+    # --- BAGIAN FILTER LANJUTAN & TABEL KESELURUHAN ---
     st.subheader("📋 Data Keseluruhan Lamaran Kerja")
-    search_query = st.text_input(
-        "🔍 Cari perusahaan atau posisi...",
-        placeholder="Ketik nama perusahaan...",
-    )
 
+    # Baris Filter Interaktif (Filter Toolbar)
+    fcol1, fcol2, fcol3 = st.columns(3)
+
+    with fcol1:
+        search_query = st.text_input(
+            "🔍 Cari Perusahaan / Posisi",
+            placeholder="Ketik nama...",
+        )
+
+    with fcol2:
+        platforms = ["Semua"] + list(df["Nemu Loker Di"].unique()) if "Nemu Loker Di" in df.columns else ["Semua"]
+        selected_platform = st.selectbox("📌 Filter Sumber Platform", platforms)
+
+    with fcol3:
+        work_types = ["Semua"] + list(df["Jenis Kerja"].unique()) if "Jenis Kerja" in df.columns else ["Semua"]
+        selected_work_type = st.selectbox("💼 Filter Jenis Kerja", work_types)
+
+    # Logika Pemfilteran Data Tabel
+    filtered_df = df.copy()
+
+    # 1. Filter dari klik kartu metrik atas
+    if st.session_state.selected_status_filter == "PENDING":
+        filtered_df = filtered_df[filtered_df["Hasil"].str.contains("PENDING|MENUNGGU", case=False, na=False)]
+        st.info("ℹ️ Menampilkan khusus daftar lamaran dengan status **Pending / Proses** (Klik 'Lihat Semua' untuk mereset).")
+    elif st.session_state.selected_status_filter == "LOLOS":
+        filtered_df = filtered_df[filtered_df["Hasil"].str.contains("LOLOS|BERHASIL", case=False, na=False)]
+        st.success("🎉 Menampilkan khusus daftar lamaran yang **Lolos / Berhasil**.")
+    elif st.session_state.selected_status_filter == "GAGAL":
+        filtered_df = filtered_df[filtered_df["Hasil"].str.contains("TIDAK LOLOS|GAGAL", case=False, na=False)]
+        st.error("⚠️ Menampilkan khusus daftar lamaran yang **Gagal / Ditolak**.")
+
+    # 2. Filter dari search box teks
     if search_query:
-        filtered_df = df[
-            df.astype(str)
+        filtered_df = filtered_df[
+            filtered_df.astype(str)
             .apply(lambda row: row.str.contains(search_query, case=False).any(), axis=1)
         ]
-        st.dataframe(filtered_df, use_container_width=True)
-    else:
-        st.dataframe(df, use_container_width=True)
+
+    # 3. Filter dari dropdown Platform
+    if selected_platform != "Semua":
+        filtered_df = filtered_df[filtered_df["Nemu Loker Di"] == selected_platform]
+
+    # 4. Filter dari dropdown Jenis Kerja
+    if selected_work_type != "Semua":
+        filtered_df = filtered_df[filtered_df["Jenis Kerja"] == selected_work_type]
+
+    # Tampilkan Tabel Hasil Filter
+    st.dataframe(filtered_df, use_container_width=True)
+    st.caption(f"Menampilkan {len(filtered_df)} dari total {len(df)} data lamaran.")
 
 else:
     st.info(
