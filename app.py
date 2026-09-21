@@ -5,40 +5,125 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-# Konfigurasi Halaman & Tema Warna Gelap Angkasa
+# Konfigurasi Halaman & Layout Lebar
 st.set_page_config(
-    page_title="Job Application Tracker - Space Theme",
+    page_title="Space Job Application Tracker",
     page_icon="🚀",
     layout="wide",
 )
 
-# Custom CSS untuk tema Biru Gelap / Angkasa
+# Custom CSS: Tema Angkasa Modern, Animasi Halus, Font Interaktif, & Card Warna-Warni
 st.markdown(
     """
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
     .stApp {
-        background: linear-gradient(to bottom right, #0b132b, #1c2541, #3a506b);
-        color: #ffffff;
+        background: linear-gradient(135deg, #0b132b 0%, #1c2541 50%, #3a506b 100%);
+        color: #f8f9fa;
+    }
+
+    /* Efek Animasi & Glassmorphism untuk Header / Container */
+    .hero-container {
+        background: rgba(28, 37, 65, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        margin-bottom: 25px;
+        animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Styling Kartu Metrik Warna-Warni Berbeda */
+    .metric-card-pending {
+        background: linear-gradient(135deg, #f39c12, #d35400);
+        padding: 20px;
+        border-radius: 12px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
+        transition: transform 0.3s ease;
+    }
+    .metric-card-pending:hover { transform: translateY(-5px); }
+
+    .metric-card-success {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        padding: 20px;
+        border-radius: 12px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+        transition: transform 0.3s ease;
+    }
+    .metric-card-success:hover { transform: translateY(-5px); }
+
+    .metric-card-danger {
+        background: linear-gradient(135deg, #c0392b, #e74c3c);
+        padding: 20px;
+        border-radius: 12px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(192, 57, 43, 0.4);
+        transition: transform 0.3s ease;
+    }
+    .metric-card-danger:hover { transform: translateY(-5px); }
+
+    .metric-card-total {
+        background: linear-gradient(135deg, #2980b9, #3498db);
+        padding: 20px;
+        border-radius: 12px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(41, 128, 185, 0.4);
+        transition: transform 0.3s ease;
+    }
+    .metric-card-total:hover { transform: translateY(-5px); }
+
+    .metric-value {
+        font-size: 28px;
+        font-weight: 700;
+        margin-top: 5px;
+    }
+    .metric-label {
+        font-size: 14px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-st.title("🚀 Space Job Application Tracker")
-st.write(
-    "Pantau progres lamaran kerja kamu secara real-time langsung dari Google Sheets!"
+# Header Utama dengan gaya Glassmorphism
+st.markdown(
+    """
+    <div class="hero-container">
+        <h1>🚀 Space Job Application Tracker</h1>
+        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier dan pemantauan progres lamaran kerja secara real-time langsung dari Google Sheets.</p>
+    </div>
+""",
+    unsafe_allow_html=True,
 )
 
 
-# Fungsi Koneksi Google Sheets pakai gspread (Anti-Gagal)
+# Fungsi Koneksi Google Sheets
 @st.cache_resource
 def init_connection():
     scope = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
     ]
-    # Mengambil secrets dari Streamlit
     creds_dict = dict(st.secrets["connections"]["gsheets"])
     creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
     client = gspread.authorize(creds)
@@ -48,7 +133,6 @@ def init_connection():
 # Ambil Data dari Spreadsheet
 try:
     client = init_connection()
-    # Sesuaikan nama file spreadsheet kamu di sini
     sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
     sheet = client.open_by_url(sheet_url).worksheet("Sheet1")
     data = sheet.get_all_records()
@@ -59,15 +143,15 @@ except Exception as e:
     )
     df = pd.DataFrame()
 
-# Sidebar untuk Input Data Baru (Create)
-st.sidebar.header("📝 Input Lamaran Baru")
-with st.sidebar.form("add_form"):
+# Sidebar Interaktif untuk Input Data Baru (Create)
+st.sidebar.markdown("<h2>📝 Panel Input Loker</h2>", unsafe_allow_html=True)
+with st.sidebar.form("add_form", clear_on_submit=True):
     sosmed = st.text_input("Sosial Media Perusahaan")
-    perusahaan = st.text_input("Nama Perusahaan")
+    perusahaan = st.text_input("Nama Perusahaan*")
     tgl_lamar = st.date_input("Tanggal Lamar", datetime.today())
-    jenis_lamaran = st.selectbox("Jenis Lamaran", ["Gform", "Website"])
-    posisi = st.text_input("Posisi")
-    dokumen_via = st.selectbox("Dokumen Via", ["Gform", "Website"])
+    jenis_lamaran = st.selectbox("Jenis Lamaran", ["Gform", "Website", "Email"])
+    posisi = st.text_input("Posisi*")
+    dokumen_via = st.selectbox("Dokumen Via", ["Gform", "Website", "Email"])
     nemu_loker = st.selectbox(
         "Nemu Loker Di",
         ["LinkedIn", "Jobstreet", "Instagram", "Telegram", "Lainnya"],
@@ -78,7 +162,7 @@ with st.sidebar.form("add_form"):
         "Tanggal Pengumuman Berakhir", datetime.today()
     )
     hasil = st.selectbox(
-        "Hasil",
+        "Status / Hasil",
         [
             "PENDING / MENUNGGU",
             "LOLOS ADMINISTRASI",
@@ -90,7 +174,7 @@ with st.sidebar.form("add_form"):
     )
     evaluasi = st.text_area("Evaluasi / Catatan")
 
-    submit_button = st.form_submit_button(label="Simpan ke Google Sheets")
+    submit_button = st.form_submit_button(label="Simpan ke Google Sheets 🚀")
 
     if submit_button:
         if perusahaan and posisi:
@@ -109,74 +193,137 @@ with st.sidebar.form("add_form"):
                 evaluasi,
             ]
             sheet.append_row(new_row)
-            st.success(f"Data lamaran untuk {perusahaan} berhasil disimpan!")
+            st.success(f"Berhasil menyimpan lamaran untuk {perusahaan}!")
             st.rerun()
         else:
             st.warning("Nama Perusahaan dan Posisi wajib diisi!")
 
 # --- DASHBOARD UTAMA ---
 if not df.empty:
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric(
-            label="Total Lamaran", value=len(df), delta="Aktif Melamar"
-        )
-    with col2:
-        pending_count = len(df[df["Hasil"].str.contains("PENDING", na=False)])
-        st.metric(label="Pending / Menunggu", value=pending_count)
-    with col3:
-        lolos_count = len(
-            df[
-                df["Hasil"].str.contains(
-                    "LOLOS|BERHASIL", case=False, na=False
-                )
-            ]
-        )
-        st.metric(label="Lolos / Berhasil", value=lolos_count)
-    with col4:
-        gagal_count = len(
-            df[df["Hasil"].str.contains("TIDAK LOLOS", na=False)]
-        )
-        st.metric(label="Gagal / Tidak Lolos", value=gagal_count)
+    # Hitung Statistik untuk Kartu Berwarna
+    total_lamaran = len(df)
+    pending_count = len(
+        df[df["Hasil"].str.contains("PENDING|MENUNGGU", case=False, na=False)]
+    )
+    lolos_count = len(
+        df[
+            df["Hasil"].str.contains(
+                "LOLOS|BERHASIL", case=False, na=False
+            )
+        ]
+    )
+    gagal_count = len(
+        df[df["Hasil"].str.contains("TIDAK LOLOS|GAGAL", case=False, na=False)]
+    )
 
-    st.markdown("---")
+    # Tampilkan Kartu Metrik Warna-Warni Berbeda
+    mcol1, mcol2, mcol3, mcol4 = st.columns(4)
 
-    st.subheader("📊 Statistik Status Lamaran")
-    col_g1, col_g2 = st.columns(2)
+    with mcol1:
+        st.markdown(
+            f"""
+            <div class="metric-card-total">
+                <div class="metric-label">Total Lamaran</div>
+                <div class="metric-value">{total_lamaran}</div>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
 
-    with col_g1:
+    with mcol2:
+        st.markdown(
+            f"""
+            <div class="metric-card-pending">
+                <div class="metric-label">Pending / Proses</div>
+                <div class="metric-value">{pending_count}</div>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+    with mcol3:
+        st.markdown(
+            f"""
+            <div class="metric-card-success">
+                <div class="metric-label">Lolos / Berhasil</div>
+                <div class="metric-value">{lolos_count}</div>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+    with mcol4:
+        st.markdown(
+            f"""
+            <div class="metric-card-danger">
+                <div class="metric-label">Gagal / Ditolak</div>
+                <div class="metric-value">{gagal_count}</div>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Bagian Filter & Visualisasi Grafik Interaktif yang Luas
+    st.subheader("📊 Analisis & Statistik Distribusi")
+
+    gcol1, gcol2 = st.columns(2)
+
+    with gcol1:
         if "Hasil" in df.columns:
             fig_status = px.pie(
                 df,
                 names="Hasil",
-                title="Distribusi Hasil Lamaran",
-                color_discrete_sequence=px.colors.sequential.Tealgrn,
+                title="Proporsi Status Hasil Lamaran",
+                hole=0.4,
+                color_discrete_sequence=px.colors.qualitative.Pastel,
             )
             fig_status.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)",
                 font_color="white",
                 plot_bgcolor="rgba(0,0,0,0)",
+                title_font_size=16,
             )
             st.plotly_chart(fig_status, use_container_width=True)
 
-    with col_g2:
+    with gcol2:
         if "Nemu Loker Di" in df.columns:
             fig_platform = px.bar(
                 df,
                 x="Nemu Loker Di",
-                title="Sumber Platform Loker Paling Sering Digunakan",
+                title="Sumber Platform Loker Terfavorit",
                 color="Nemu Loker Di",
+                color_discrete_sequence=px.colors.qualitative.Bold,
             )
             fig_platform.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)",
                 font_color="white",
                 plot_bgcolor="rgba(0,0,0,0)",
+                title_font_size=16,
+                showlegend=False,
             )
             st.plotly_chart(fig_platform, use_container_width=True)
 
-    st.subheader("📋 Daftar Seluruh Lamaran Kerja")
-    st.dataframe(df, use_container_width=True)
+    st.markdown("---")
+
+    # Fitur Pencarian / Filter Data Tabel
+    st.subheader("📋 Data Keseluruhan Lamaran Kerja")
+    search_query = st.text_input(
+        "🔍 Cari perusahaan atau posisi...",
+        placeholder="Ketik nama perusahaan...",
+    )
+
+    if search_query:
+        filtered_df = df[
+            df.astype(str)
+            .apply(lambda row: row.str.contains(search_query, case=False).any(), axis=1)
+        ]
+        st.dataframe(filtered_df, use_container_width=True)
+    else:
+        st.dataframe(df, use_container_width=True)
+
 else:
     st.info(
-        "Belum ada data atau Google Sheets masih kosong. Silakan input data lewat sidebar kiri!"
+        "🚀 Belum ada data atau Google Sheets masih kosong. Silakan input data lamaran pertamamu lewat sidebar di sebelah kiri!"
     )
