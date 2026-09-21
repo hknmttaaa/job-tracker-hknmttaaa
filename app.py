@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Tema Angkasa, Tombol Kontras, & Animasi Entrance Halus
+# Custom CSS: Tema Angkasa, Kartu Metrik Interaktif (Bisa Diklik), & Animasi Halus
 st.markdown(
     """
     <style>
@@ -43,32 +43,7 @@ st.markdown(
         to { opacity: 1; transform: translateY(0); }
     }
 
-    .metric-card {
-        padding: 20px;
-        border-radius: 12px;
-        color: white;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        margin-bottom: 10px;
-        transition: transform 0.3s ease;
-    }
-    .metric-card:hover {
-        transform: translateY(-4px);
-    }
-    
-    .metric-value {
-        font-size: 28px;
-        font-weight: 700;
-        margin-top: 5px;
-    }
-    .metric-label {
-        font-size: 14px;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    /* Animasi Smooth Muncul & Memutar Pelan untuk Kotak Grafik */
+    /* Animasi Smooth Muncul untuk Kotak Grafik */
     div.element-container:has(iframe) {
         animation: smoothChartEntry 0.9s cubic-bezier(0.25, 1, 0.5, 1);
     }
@@ -93,7 +68,7 @@ st.markdown(
     """
     <div class="hero-container">
         <h1>🚀 Space Job Application Tracker</h1>
-        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan animasi grafik halus dan pemantauan real-time.</p>
+        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan grafik dinamis per kategori dan pemantauan real-time.</p>
     </div>
 """,
     unsafe_allow_html=True,
@@ -196,66 +171,56 @@ if not df.empty and "Hasil" in df.columns:
     lolos_count = len(lolos_df)
     gagal_count = len(gagal_df)
 
-    # Tampilkan Kartu Metrik dengan Tombol Berwarna Kontras
+    # Kotak Metrik Sekaligus Tombol Interaktif untuk Mengubah Grafik di Bawah
     mcol1, mcol2, mcol3, mcol4 = st.columns(4)
 
     with mcol1:
-        st.markdown(
-            f"""
-            <div class="metric-card" style="background: linear-gradient(135deg, #2980b9, #3498db);">
-                <div class="metric-label">Total Lamaran</div>
-                <div class="metric-value">{total_lamaran}</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
+        # Tombol utama untuk mengubah grafik ke mode Total
+        btn_all_chart = st.button(
+            f"📁 TOTAL LAMARAN\n\n{total_lamaran}", 
+            use_container_width=True, 
+            type="primary" if st.session_state.active_view == "ALL" else "secondary"
         )
-        btn_all = st.button("📁 Lihat Semua", use_container_width=True, type="primary")
+        # Tombol kecil di bawahnya untuk pop-up detail data
+        btn_all_popup = st.button("Lihat Rincian Data 📋", use_container_width=True)
 
     with mcol2:
-        st.markdown(
-            f"""
-            <div class="metric-card" style="background: linear-gradient(135deg, #f39c12, #d35400);">
-                <div class="metric-label">Pending / Proses</div>
-                <div class="metric-value">{pending_count}</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
+        btn_pending_chart = st.button(
+            f"⏳ TOTAL PENDING\n\n{pending_count}", 
+            use_container_width=True,
+            type="primary" if st.session_state.active_view == "PENDING" else "secondary"
         )
-        btn_pending = st.button("⏳ Lihat Pending", use_container_width=True)
+        btn_pending_popup = st.button("Lihat Rincian Data ⏳", use_container_width=True)
 
     with mcol3:
-        st.markdown(
-            f"""
-            <div class="metric-card" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
-                <div class="metric-label">Lolos / Berhasil</div>
-                <div class="metric-value">{lolos_count}</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
+        btn_lolos_chart = st.button(
+            f"✅ TOTAL LOLOS\n\n{lolos_count}", 
+            use_container_width=True,
+            type="primary" if st.session_state.active_view == "LOLOS" else "secondary"
         )
-        btn_lolos = st.button("✅ Lihat Lolos", use_container_width=True)
+        btn_lolos_popup = st.button("Lihat Rincian Data ✅", use_container_width=True)
 
     with mcol4:
-        st.markdown(
-            f"""
-            <div class="metric-card" style="background: linear-gradient(135deg, #c0392b, #e74c3c);">
-                <div class="metric-label">Gagal / Ditolak</div>
-                <div class="metric-value">{gagal_count}</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
+        btn_gagal_chart = st.button(
+            f"❌ TOTAL GAGAL\n\n{gagal_count}", 
+            use_container_width=True,
+            type="primary" if st.session_state.active_view == "GAGAL" else "secondary"
         )
-        btn_gagal = st.button("❌ Lihat Gagal", use_container_width=True)
+        btn_gagal_popup = st.button("Lihat Rincian Data ❌", use_container_width=True)
 
-    # Logika Ubah Mode Grafik & Pop-up
-    if btn_all:
+    # Logika Ubah Mode Grafik Berdasarkan Tombol Kotak Atas
+    if btn_all_chart:
         st.session_state.active_view = "ALL"
-    elif btn_pending:
+        st.rerun()
+    elif btn_pending_chart:
         st.session_state.active_view = "PENDING"
-    elif btn_lolos:
+        st.rerun()
+    elif btn_lolos_chart:
         st.session_state.active_view = "LOLOS"
-    elif btn_gagal:
+        st.rerun()
+    elif btn_gagal_chart:
         st.session_state.active_view = "GAGAL"
+        st.rerun()
 
     def safe_display_df(data_frame):
         available_cols = [c for c in ["Perusahaan", "Posisi", "Tanggal Lamar", "Nemu Loker Di", "Jenis Lamaran", "Hasil"] if c in data_frame.columns]
@@ -264,6 +229,7 @@ if not df.empty and "Hasil" in df.columns:
         else:
             st.dataframe(data_frame, use_container_width=True)
 
+    # --- DEFINISI POP-UP (MODAL) DETAIL DATA ---
     @st.dialog("📊 Ringkasan Keseluruhan Lamaran", width="large")
     def show_all_summary():
         st.write(f"### Total Perusahaan Dilamar: **{total_lamaran}**")
@@ -303,13 +269,14 @@ if not df.empty and "Hasil" in df.columns:
         else:
             st.info("Tidak ada data lamaran yang gagal.")
 
-    if btn_all:
+    # Trigger Pop-up Berdasarkan Tombol Bawah Kotak
+    if btn_all_popup:
         show_all_summary()
-    elif btn_pending:
+    elif btn_pending_popup:
         show_pending_list()
-    elif btn_lolos:
+    elif btn_lolos_popup:
         show_lolos_list()
-    elif btn_gagal:
+    elif btn_gagal_popup:
         show_gagal_list()
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -345,11 +312,11 @@ if not df.empty and "Hasil" in df.columns:
                 hole=0.5,
                 color_discrete_sequence=px.colors.qualitative.Pastel,
             )
-            # Tanpa teks angka menumpuk, muncul detail pas di-hover
+            # Label persen 1.11% disembunyikan agar bersih, muncul interaktif saat di-hover/klik
             fig_status.update_traces(
                 textinfo='none', 
                 hoverinfo='label+percent+value',
-                rotation=45, # Memutar sedikit posisi awal donat agar dinamis
+                rotation=45, 
                 pull=[0.05 if i == 0 else 0 for i in range(len(active_chart_df['Hasil'].unique()))]
             )
             fig_status.update_layout(
@@ -357,7 +324,7 @@ if not df.empty and "Hasil" in df.columns:
                 font_color="white",
                 plot_bgcolor="rgba(0,0,0,0)",
                 title_font_size=16,
-                transition_duration=800 # Durasi transisi mutar/geser jadi jauh lebih lembut
+                transition_duration=800
             )
             st.plotly_chart(fig_status, use_container_width=True)
         else:
