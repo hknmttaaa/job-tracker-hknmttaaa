@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Membuat tombol Streamlit menyerupai kartu metrik HTML yang estetik
+# Custom CSS: Styling Umum & Kartu Metrik Estetik Berwarna
 st.markdown(
     """
     <style>
@@ -37,65 +37,40 @@ st.markdown(
         margin-bottom: 25px;
     }
 
-    /* Desain persis seperti kartu metrik (Total Lamaran -> Oranye) */
-    div.metric-all button {
-        background: linear-gradient(135deg, #3498db, #2980b9) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
-        height: 110px !important;
-        width: 100% !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        font-weight: 700 !important;
+    /* Desain Kartu Metrik Custom HTML */
+    .custom-card {
+        padding: 20px;
+        border-radius: 14px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 90px;
+        margin-bottom: 5px;
+    }
+    .card-all { background: linear-gradient(135deg, #3498db, #2980b9); }
+    .card-pending { background: linear-gradient(135deg, #f39c12, #d35400); }
+    .card-lolos { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+    .card-gagal { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    
+    .card-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.9);
+    }
+    .card-value {
+        font-size: 26px;
+        font-weight: 800;
+        color: white;
     }
 
-    /* Desain Pending -> Kuning */
-    div.metric-pending button {
-        background: linear-gradient(135deg, #f39c12, #d35400) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
-        height: 110px !important;
-        width: 100% !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        font-weight: 700 !important;
-    }
-
-    /* Desain Lolos -> Hijau */
-    div.metric-lolos button {
-        background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
-        height: 110px !important;
-        width: 100% !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        font-weight: 700 !important;
-    }
-
-    /* Desain Gagal -> Merah */
-    div.metric-gagal button {
-        background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
-        height: 110px !important;
-        width: 100% !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        font-weight: 700 !important;
-    }
-
-    div[class*="metric-"] button:hover {
-        transform: translateY(-2px);
-        filter: brightness(1.1);
-        color: white !important;
-    }
-
-    /* Tombol teks kecil di bawah */
+    /* Styling Tombol Standar Streamlit di Bawahnya */
     .stButton > button {
         background-color: #1e293b !important;
         color: #e2e8f0 !important;
@@ -227,151 +202,66 @@ if not df.empty and "Hasil" in df.columns:
     lolos_count = len(lolos_df)
     gagal_count = len(gagal_df)
 
-    # CSS Khusus untuk Memaksa Tombol Streamlit Berubah Jadi Kartu Berwarna Estetik
-    st.markdown(
-        """
-        <style>
-        div[data-testid="column"] button.metric-card-all {
-            background: linear-gradient(135deg, #3498db, #2980b9) !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 14px !important;
-            height: 110px !important;
-            width: 100% !important;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-            font-weight: 700 !important;
-            font-size: 16px !important;
-        }
-        div[data-testid="column"] button.metric-card-pending {
-            background: linear-gradient(135deg, #f39c12, #d35400) !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 14px !important;
-            height: 110px !important;
-            width: 100% !important;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-            font-weight: 700 !important;
-            font-size: 16px !important;
-        }
-        div[data-testid="column"] button.metric-card-lolos {
-            background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 14px !important;
-            height: 110px !important;
-            width: 100% !important;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-            font-weight: 700 !important;
-            font-size: 16px !important;
-        }
-        div[data-testid="column"] button.metric-card-gagal {
-            background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 14px !important;
-            height: 110px !important;
-            width: 100% !important;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-            font-weight: 700 !important;
-            font-size: 16px !important;
-        }
+    # 4 Kolom Kartu Metrik Estetik Berwarna
+    col_m1, col_m2, col_m3, col_m4 = st.columns(4)
 
-        div[data-testid="column"] button[class*="metric-card-"]:hover {
-            transform: translateY(-3px);
-            filter: brightness(1.15);
-            color: white !important;
-        }
-        </style>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    # 4 Kolom Kartu Metrik Interaktif (Langsung Ubah Grafik Tanpa Refresh Browser)
-    mcol1, mcol2, mcol3, mcol4 = st.columns(4)
-
-    with mcol1:
-        if st.button(
-            f"TOTAL LAMARAN\n\n{total_lamaran}",
-            key="btn_all",
-            use_container_width=True,
-        ):
-            st.session_state.active_view = "ALL"
+    with col_m1:
         st.markdown(
-            """
-            <script>
-            var buttons = document.querySelectorAll('button');
-            buttons.forEach(function(btn) {
-                if (btn.innerText.includes('TOTAL LAMARAN')) {
-                    btn.className += ' metric-card-all';
-                }
-            });
-            </script>
+            f"""
+            <div class="custom-card card-all">
+                <div class="card-title">TOTAL LAMARAN</div>
+                <div class="card-value">{total_lamaran}</div>
+            </div>
         """,
             unsafe_allow_html=True,
         )
+        if st.button("👉 Pilih Semua", key="b_all", use_container_width=True):
+            st.session_state.active_view = "ALL"
+            st.rerun()
 
-    with mcol2:
+    with col_m2:
+        st.markdown(
+            f"""
+            <div class="custom-card card-pending">
+                <div class="card-title">PENDING / PROSES</div>
+                <div class="card-value">{pending_count}</div>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
         if st.button(
-            f"PENDING / PROSES\n\n{pending_count}",
-            key="btn_pending",
-            use_container_width=True,
+            "👉 Pilih Pending", key="b_pen", use_container_width=True
         ):
             st.session_state.active_view = "PENDING"
+            st.rerun()
+
+    with col_m3:
         st.markdown(
-            """
-            <script>
-            var buttons = document.querySelectorAll('button');
-            buttons.forEach(function(btn) {
-                if (btn.innerText.includes('PENDING / PROSES')) {
-                    btn.className += ' metric-card-pending';
-                }
-            });
-            </script>
+            f"""
+            <div class="custom-card card-lolos">
+                <div class="card-title">LOLOS / BERHASIL</div>
+                <div class="card-value">{lolos_count}</div>
+            </div>
         """,
             unsafe_allow_html=True,
         )
-
-    with mcol3:
-        if st.button(
-            f"LOLOS / BERHASIL\n\n{lolos_count}",
-            key="btn_lolos",
-            use_container_width=True,
-        ):
+        if st.button("👉 Pilih Lolos", key="b_lol", use_container_width=True):
             st.session_state.active_view = "LOLOS"
-        st.markdown(
-            """
-            <script>
-            var buttons = document.querySelectorAll('button');
-            buttons.forEach(function(btn) {
-                if (btn.innerText.includes('LOLOS / BERHASIL')) {
-                    btn.className += ' metric-card-lolos';
-                }
-            });
-            </script>
-        """,
-            unsafe_allow_html=True,
-        )
+            st.rerun()
 
-    with mcol4:
-        if st.button(
-            f"GAGAL / DITOLAK\n\n{gagal_count}",
-            key="btn_gagal",
-            use_container_width=True,
-        ):
-            st.session_state.active_view = "GAGAL"
+    with col_m4:
         st.markdown(
-            """
-            <script>
-            var buttons = document.querySelectorAll('button');
-            buttons.forEach(function(btn) {
-                if (btn.innerText.includes('GAGAL / DITOLAK')) {
-                    btn.className += ' metric-card-gagal';
-                }
-            });
-            </script>
+            f"""
+            <div class="custom-card card-gagal">
+                <div class="card-title">GAGAL / DITOLAK</div>
+                <div class="card-value">{gagal_count}</div>
+            </div>
         """,
             unsafe_allow_html=True,
         )
+        if st.button("👉 Pilih Gagal", key="b_gag", use_container_width=True):
+            st.session_state.active_view = "GAGAL"
+            st.rerun()
 
     current_mode = st.session_state.active_view
 
