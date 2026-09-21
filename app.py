@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Tema Angkasa Modern, Kartu Interaktif, & Efek Glassmorphism
+# Custom CSS: Tema Angkasa, Tombol Warna-Warni Kontras, & Styling Modal
 st.markdown(
     """
     <style>
@@ -43,19 +43,13 @@ st.markdown(
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Styling Kartu Metrik Interaktif */
     .metric-card {
         padding: 20px;
         border-radius: 12px;
         color: white;
         text-align: center;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
         margin-bottom: 10px;
-    }
-    .metric-card:hover { 
-        transform: translateY(-5px); 
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
     }
     
     .metric-value {
@@ -79,7 +73,7 @@ st.markdown(
     """
     <div class="hero-container">
         <h1>🚀 Space Job Application Tracker</h1>
-        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan filter dinamis dan pemantauan real-time.</p>
+        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan pop-up ringkasan dan pemantauan real-time.</p>
     </div>
 """,
     unsafe_allow_html=True,
@@ -171,25 +165,15 @@ with st.sidebar.form("add_form", clear_on_submit=True):
 if not df.empty:
     # Hitung Statistik
     total_lamaran = len(df)
-    pending_count = len(
-        df[df["Hasil"].str.contains("PENDING|MENUNGGU", case=False, na=False)]
-    )
-    lolos_count = len(
-        df[
-            df["Hasil"].str.contains(
-                "LOLOS|BERHASIL", case=False, na=False
-            )
-        ]
-    )
-    gagal_count = len(
-        df[df["Hasil"].str.contains("TIDAK LOLOS|GAGAL", case=False, na=False)]
-    )
+    pending_df = df[df["Hasil"].str.contains("PENDING|MENUNGGU", case=False, na=False)]
+    lolos_df = df[df["Hasil"].str.contains("LOLOS|BERHASIL", case=False, na=False)]
+    gagal_df = df[df["Hasil"].str.contains("TIDAK LOLOS|GAGAL", case=False, na=False)]
 
-    # Inisialisasi session state untuk filter klik metrik
-    if "selected_status_filter" not in st.session_state:
-        st.session_state.selected_status_filter = "Semua"
+    pending_count = len(pending_df)
+    lolos_count = len(lolos_df)
+    gagal_count = len(gagal_df)
 
-    # Tampilkan Kartu Metrik dengan tombol interaktif di bawahnya
+    # Tampilkan Kartu Metrik dengan Tombol Berwarna Kontras
     mcol1, mcol2, mcol3, mcol4 = st.columns(4)
 
     with mcol1:
@@ -202,8 +186,7 @@ if not df.empty:
         """,
             unsafe_allow_html=True,
         )
-        if st.button("📁 Lihat Semua", use_container_width=True):
-            st.session_state.selected_status_filter = "Semua"
+        btn_all = st.button("📁 Lihat Semua", use_container_width=True, type="primary")
 
     with mcol2:
         st.markdown(
@@ -215,8 +198,7 @@ if not df.empty:
         """,
             unsafe_allow_html=True,
         )
-        if st.button("⏳ Lihat Pending", use_container_width=True):
-            st.session_state.selected_status_filter = "PENDING"
+        btn_pending = st.button("⏳ Lihat Pending", use_container_width=True)
 
     with mcol3:
         st.markdown(
@@ -228,8 +210,7 @@ if not df.empty:
         """,
             unsafe_allow_html=True,
         )
-        if st.button("✅ Lihat Lolos", use_container_width=True):
-            st.session_state.selected_status_filter = "LOLOS"
+        btn_lolos = st.button("✅ Lihat Lolos", use_container_width=True)
 
     with mcol4:
         st.markdown(
@@ -241,8 +222,59 @@ if not df.empty:
         """,
             unsafe_allow_html=True,
         )
-        if st.button("❌ Lihat Gagal", use_container_width=True):
-            st.session_state.selected_status_filter = "GAGAL"
+        btn_gagal = st.button("❌ Lihat Gagal", use_container_width=True)
+
+    # --- DEFINISI POP-UP (MODAL) ---
+    @st.dialog("📊 Ringkasan Keseluruhan Lamaran", width="large")
+    def show_all_summary():
+        st.write(f"### Total Perusahaan Dilamar: **{total_lamaran}**")
+        
+        col_s1, col_s2 = st.columns(2)
+        with col_s1:
+            st.write("📌 **Distribusi Jenis Lamaran:**")
+            if "Jenis Lamaran" in df.columns:
+                st.dataframe(df["Jenis Lamaran"].value_counts().reset_index(), use_container_width=True, hide_index=True)
+        with col_s2:
+            st.write("💼 **Daftar Posisi yang Dilamar:**")
+            if "Posisi" in df.columns:
+                st.dataframe(df["Posisi"].value_counts().reset_index(), use_container_width=True, hide_index=True)
+        
+        st.write("📋 **Seluruh Data Perusahaan:**")
+        st.dataframe(df[["Perusahaan", "Posisi", "Jenis Lamaran", "Hasil"]], use_container_width=True)
+
+    @st.dialog("⏳ Daftar Lamaran Tahap Pending / Proses", width="large")
+    def show_pending_list():
+        st.write(f"Total data pending saat ini: **{pending_count}** perusahaan")
+        if not pending_df.empty:
+            st.dataframe(pending_df[["Perusahaan", "Posisi", "Tanggal Lamar", "Nemu Loker Di", "Hasil"]], use_container_width=True)
+        else:
+            st.info("Tidak ada data lamaran dengan status pending.")
+
+    @st.dialog("✅ Daftar Lamaran Tahap Lolos / Berhasil", width="large")
+    def show_lolos_list():
+        st.write(f"Total data lolos saat ini: **{lolos_count}** perusahaan 🎉")
+        if not lolos_df.empty:
+            st.dataframe(lolos_df[["Perusahaan", "Posisi", "Tanggal Lamar", "Nemu Loker Di", "Hasil"]], use_container_width=True)
+        else:
+            st.info("Belum ada data lamaran yang lolos.")
+
+    @st.dialog("❌ Daftar Lamaran Tahap Gagal / Ditolak", width="large")
+    def show_gagal_list():
+        st.write(f"Total data gagal saat ini: **{gagal_count}** perusahaan")
+        if not gagal_df.empty:
+            st.dataframe(gagal_df[["Perusahaan", "Posisi", "Tanggal Lamar", "Nemu Loker Di", "Hasil"]], use_container_width=True)
+        else:
+            st.info("Tidak ada data lamaran yang gagal.")
+
+    # Trigger Pop-up Berdasarkan Tombol yang Ditekan
+    if btn_all:
+        show_all_summary()
+    if btn_pending:
+        show_pending_list()
+    if btn_lolos:
+        show_lolos_list()
+    if btn_gagal:
+        show_gagal_list()
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -287,10 +319,9 @@ if not df.empty:
 
     st.markdown("---")
 
-    # --- BAGIAN FILTER LANJUTAN & TABEL KESELURUHAN ---
+    # --- BAGIAN FILTER & TABEL KESELURUHAN ---
     st.subheader("📋 Data Keseluruhan Lamaran Kerja")
 
-    # Baris Filter Interaktif (Filter Toolbar)
     fcol1, fcol2, fcol3 = st.columns(3)
 
     with fcol1:
@@ -307,36 +338,21 @@ if not df.empty:
         work_types = ["Semua"] + list(df["Jenis Kerja"].unique()) if "Jenis Kerja" in df.columns else ["Semua"]
         selected_work_type = st.selectbox("💼 Filter Jenis Kerja", work_types)
 
-    # Logika Pemfilteran Data Tabel
+    # Logika Pemfilteran Data Tabel Bawah
     filtered_df = df.copy()
 
-    # 1. Filter dari klik kartu metrik atas
-    if st.session_state.selected_status_filter == "PENDING":
-        filtered_df = filtered_df[filtered_df["Hasil"].str.contains("PENDING|MENUNGGU", case=False, na=False)]
-        st.info("ℹ️ Menampilkan khusus daftar lamaran dengan status **Pending / Proses** (Klik 'Lihat Semua' untuk mereset).")
-    elif st.session_state.selected_status_filter == "LOLOS":
-        filtered_df = filtered_df[filtered_df["Hasil"].str.contains("LOLOS|BERHASIL", case=False, na=False)]
-        st.success("🎉 Menampilkan khusus daftar lamaran yang **Lolos / Berhasil**.")
-    elif st.session_state.selected_status_filter == "GAGAL":
-        filtered_df = filtered_df[filtered_df["Hasil"].str.contains("TIDAK LOLOS|GAGAL", case=False, na=False)]
-        st.error("⚠️ Menampilkan khusus daftar lamaran yang **Gagal / Ditolak**.")
-
-    # 2. Filter dari search box teks
     if search_query:
         filtered_df = filtered_df[
             filtered_df.astype(str)
             .apply(lambda row: row.str.contains(search_query, case=False).any(), axis=1)
         ]
 
-    # 3. Filter dari dropdown Platform
     if selected_platform != "Semua":
         filtered_df = filtered_df[filtered_df["Nemu Loker Di"] == selected_platform]
 
-    # 4. Filter dari dropdown Jenis Kerja
     if selected_work_type != "Semua":
         filtered_df = filtered_df[filtered_df["Jenis Kerja"] == selected_work_type]
 
-    # Tampilkan Tabel Hasil Filter
     st.dataframe(filtered_df, use_container_width=True)
     st.caption(f"Menampilkan {len(filtered_df)} dari total {len(df)} data lamaran.")
 
