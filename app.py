@@ -1,8 +1,9 @@
 from datetime import datetime
+import gspread
+from google.oauth2.service_account import Credentials
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from streamlit_gsheets import GsheetsConnection
 
 # Konfigurasi Halaman & Tema Warna Gelap Angkasa
 st.set_page_config(
@@ -11,20 +12,13 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS untuk tema Biru Gelap / Angkasa yang elegan
+# Custom CSS untuk tema Biru Gelap / Angkasa
 st.markdown(
     """
     <style>
     .stApp {
         background: linear-gradient(to bottom right, #0b132b, #1c2541, #3a506b);
         color: #ffffff;
-    }
-    .metric-card {
-        background-color: rgba(28, 37, 65, 0.7);
-        border: 1px solid #48cae4;
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
     }
     </style>
 """,
@@ -33,21 +27,39 @@ st.markdown(
 
 st.title("🚀 Space Job Application Tracker")
 st.write(
-    "Pantau progres lamaran kerja kamu dengan mudah, interaktif, dan real-time!"
+    "Pantau progres lamaran kerja kamu secara real-time langsung dari Google Sheets!"
 )
 
-# 1. Koneksi ke Google Sheets
-conn = st.connection("gsheets", type=GsheetsConnection)
 
-# Ambil data dari Google Sheets (pastikan nama tab bawahnya "Sheet1")
+# Fungsi Koneksi Google Sheets pakai gspread (Anti-Gagal)
+@st.cache_resource
+def init_connection():
+    scope = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
+    # Mengambil secrets dari Streamlit
+    creds_dict = dict(st.secrets["connections"]["gsheets"])
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+    client = gspread.authorize(creds)
+    return client
+
+
+# Ambil Data dari Spreadsheet
 try:
-    df = conn.read(worksheet="Sheet1", ttl=0)
-    df = df.dropna(how="all")
+    client = init_connection()
+    # Sesuaikan nama file spreadsheet kamu di sini
+    sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
+    sheet = client.open_by_url(sheet_url).worksheet("Sheet1")
+    data = sheet.get_all_records()
+    df = pd.DataFrame(data)
 except Exception as e:
-    st.error(f"Gagal memuat data dari Google Sheets. Error: {e}")
+    st.error(
+        f"Gagal terhubung ke Google Sheets. Pastikan format Secrets benar. Error: {e}"
+    )
     df = pd.DataFrame()
 
-# Sidebar untuk Input Data Baru (Create) - Langsung Masuk ke Google Sheets
+# Sidebar untuk Input Data Baru (Create)
 st.sidebar.header("📝 Input Lamaran Baru")
 with st.sidebar.form("add_form"):
     sosmed = st.text_input("Sosial Media Perusahaan")
@@ -82,28 +94,21 @@ with st.sidebar.form("add_form"):
 
     if submit_button:
         if perusahaan and posisi:
-            new_data = pd.DataFrame(
-                [
-                    {
-                        "Sosial Media": sosmed,
-                        "Nama Perusahaan": perusahaan,
-                        "Tanggal Lamar": str(tgl_lamar),
-                        "Jenis Lamaran": jenis_lamaran,
-                        "Posisi": posisi,
-                        "Dokumen Via": dokumen_via,
-                        "Nemu Loker Di": nemu_loker,
-                        "Durasi Kontrak": durasi_kontrak,
-                        "Jenis Kerja": jenis_kerja,
-                        "Tanggal Pengumuman Berakhir": str(tgl_pengumuman),
-                        "Hasil": hasil,
-                        "Evaluasi": evaluasi,
-                    }
-                ]
-            )
-
-            # Gabungkan data lama dengan data baru lalu kirim ke Google Sheets
-            updated_df = pd.concat([df, new_data], ignore_index=True)
-            conn.update(worksheet="Sheet1", data=updated_df)
+            new_row = [
+                sosmed,
+                perusahaan,
+                str(tgl_lamar),
+                jenis_lamaran,
+                posisi,
+                dokumen_via,
+                nemu_loker,
+                durasi_kontrak,
+                jenis_kerja,
+                str(tgl_pengumuman),
+                hasil,
+                evaluasi,
+            ]
+            sheet.append_row(new_row)
             st.success(f"Data lamaran untuk {perusahaan} berhasil disimpan!")
             st.rerun()
         else:
@@ -111,7 +116,6 @@ with st.sidebar.form("add_form"):
 
 # --- DASHBOARD UTAMA ---
 if not df.empty:
-    # 1. Metrik Ringkasan Atas
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric(
@@ -137,7 +141,6 @@ if not df.empty:
 
     st.markdown("---")
 
-    # 2. Grafik Interaktif
     st.subheader("📊 Statistik Status Lamaran")
     col_g1, col_g2 = st.columns(2)
 
@@ -171,7 +174,6 @@ if not df.empty:
             )
             st.plotly_chart(fig_platform, use_container_width=True)
 
-    # 3. Tabel Data Keseluruhan
     st.subheader("📋 Daftar Seluruh Lamaran Kerja")
     st.dataframe(df, use_container_width=True)
 else:
