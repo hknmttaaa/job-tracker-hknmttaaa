@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Tema Angkasa, Ukuran Kartu Metrik Besar Kembali Seperti Semula
+# Custom CSS: Membuat tombol Streamlit menyerupai kartu metrik HTML yang estetik
 st.markdown(
     """
     <style>
@@ -37,70 +37,70 @@ st.markdown(
         margin-bottom: 25px;
     }
 
-    /* Memaksa tombol atas berubah warna dan ukuran besar dengan selector yang lebih kuat */
-    div.metric-all button[kind="secondary"] {
-        background: linear-gradient(135deg, #f39c12, #d35400) !important; /* Oranye */
-        color: #ffffff !important;
+    /* Desain persis seperti kartu metrik (Total Lamaran -> Oranye) */
+    div.metric-all button {
+        background: linear-gradient(135deg, #3498db, #2980b9) !important;
+        color: white !important;
         border: none !important;
-        border-radius: 14px !important;
-        padding: 24px 20px !important;
-        height: 115px !important;
+        border-radius: 12px !important;
+        padding: 20px !important;
+        height: 110px !important;
         width: 100% !important;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         font-weight: 700 !important;
     }
 
-    div.metric-pending button[kind="secondary"] {
-        background: linear-gradient(135deg, #f1c40f, #f39c12) !important; /* Kuning */
-        color: #1a1a1a !important; /* Teks gelap agar jelas di atas warna kuning */
+    /* Desain Pending -> Kuning */
+    div.metric-pending button {
+        background: linear-gradient(135deg, #f39c12, #d35400) !important;
+        color: white !important;
         border: none !important;
-        border-radius: 14px !important;
-        padding: 24px 20px !important;
-        height: 115px !important;
+        border-radius: 12px !important;
+        padding: 20px !important;
+        height: 110px !important;
         width: 100% !important;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         font-weight: 700 !important;
     }
 
-    div.metric-lolos button[kind="secondary"] {
-        background: linear-gradient(135deg, #27ae60, #2ecc71) !important; /* Hijau */
-        color: #ffffff !important;
+    /* Desain Lolos -> Hijau */
+    div.metric-lolos button {
+        background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+        color: white !important;
         border: none !important;
-        border-radius: 14px !important;
-        padding: 24px 20px !important;
-        height: 115px !important;
+        border-radius: 12px !important;
+        padding: 20px !important;
+        height: 110px !important;
         width: 100% !important;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         font-weight: 700 !important;
     }
 
-    div.metric-gagal button[kind="secondary"] {
-        background: linear-gradient(135deg, #c0392b, #e74c3c) !important; /* Merah */
-        color: #ffffff !important;
+    /* Desain Gagal -> Merah */
+    div.metric-gagal button {
+        background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+        color: white !important;
         border: none !important;
-        border-radius: 14px !important;
-        padding: 24px 20px !important;
-        height: 115px !important;
+        border-radius: 12px !important;
+        padding: 20px !important;
+        height: 110px !important;
         width: 100% !important;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         font-weight: 700 !important;
     }
 
-    /* Efek hover */
-    div[class*="metric-"] button[kind="secondary"]:hover {
-        transform: translateY(-3px);
+    div[class*="metric-"] button:hover {
+        transform: translateY(-2px);
         filter: brightness(1.1);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
-        color: inherit !important;
+        color: white !important;
     }
 
-    /* Styling tombol teks kecil di bawah (supaya tidak ikut besar) */
+    /* Tombol teks kecil di bawah */
     .stButton > button {
         background-color: #1e293b !important;
         color: #e2e8f0 !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         font-weight: 600 !important;
-        transition: all 0.2s ease-in-out;
     }
     
     .stButton > button:hover {
@@ -221,34 +221,42 @@ if not df.empty and "Hasil" in df.columns:
     lolos_count = len(lolos_df)
     gagal_count = len(gagal_df)
 
-    # 4 Kolom Kartu Metrik Atas (Ukurannya kembali besar dan berfungsi sebagai tombol pengubah grafik)
+    # 4 Kolom Kartu Metrik Utama di Atas (Berfungsi Mengubah Grafik & Sesuai Warna Pilihanmu)
     mcol1, mcol2, mcol3, mcol4 = st.columns(4)
 
     with mcol1:
         st.markdown('<div class="metric-all">', unsafe_allow_html=True)
-        btn_chart_all = st.button(f"TOTAL LAMARAN\n\n{total_lamaran}", key="chart_all", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        btn_chart_all = st.button(
+            f"TOTAL LAMARAN\n\n{total_lamaran}", key="c_all", use_container_width=True
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
         popup_all = st.button("📁 Lihat Semua", use_container_width=True)
 
     with mcol2:
         st.markdown('<div class="metric-pending">', unsafe_allow_html=True)
-        btn_chart_pending = st.button(f"PENDING / PROSES\n\n{pending_count}", key="chart_pending", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        btn_chart_pending = st.button(
+            f"PENDING / PROSES\n\n{pending_count}", key="c_pen", use_container_width=True
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
         popup_pending = st.button("⏳ Lihat Pending", use_container_width=True)
 
     with mcol3:
         st.markdown('<div class="metric-lolos">', unsafe_allow_html=True)
-        btn_chart_lolos = st.button(f"LOLOS / BERHASIL\n\n{lolos_count}", key="chart_lolos", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        btn_chart_lolos = st.button(
+            f"LOLOS / BERHASIL\n\n{lolos_count}", key="c_lol", use_container_width=True
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
         popup_lolos = st.button("✅ Lihat Lolos", use_container_width=True)
 
     with mcol4:
         st.markdown('<div class="metric-gagal">', unsafe_allow_html=True)
-        btn_chart_gagal = st.button(f"GAGAL / DITOLAK\n\n{gagal_count}", key="chart_gagal", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        btn_chart_gagal = st.button(
+            f"GAGAL / DITOLAK\n\n{gagal_count}", key="c_gag", use_container_width=True
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
         popup_gagal = st.button("❌ Lihat Gagal", use_container_width=True)
 
-    # Logika Perubahan Grafik Berdasarkan Tombol Kotak Atas
+    # Logika Ubah Grafik Berdasarkan Tombol Kartu Atas
     if btn_chart_all:
         st.session_state.active_view = "ALL"
     elif btn_chart_pending:
@@ -259,13 +267,26 @@ if not df.empty and "Hasil" in df.columns:
         st.session_state.active_view = "GAGAL"
 
     def safe_display_df(data_frame):
-        available_cols = [c for c in ["Perusahaan", "Posisi", "Tanggal Lamar", "Nemu Loker Di", "Jenis Lamaran", "Hasil"] if c in data_frame.columns]
+        available_cols = [
+            c
+            for c in [
+                "Perusahaan",
+                "Posisi",
+                "Tanggal Lamar",
+                "Nemu Loker Di",
+                "Jenis Lamaran",
+                "Hasil",
+            ]
+            if c in data_frame.columns
+        ]
         if available_cols:
-            st.dataframe(data_frame[available_cols], use_container_width=True)
+            st.dataframe(
+                data_frame[available_cols], use_container_width=True
+            )
         else:
             st.dataframe(data_frame, use_container_width=True)
 
-    # --- POP-UP LIST DETAIL DATA (Dipicu oleh tombol kecil di bawah) ---
+    # --- POP-UP LIST DETAIL DATA (Dipicu tombol kecil di bawah) ---
     @st.dialog("📊 Ringkasan Keseluruhan Lamaran", width="large")
     def show_all_summary():
         st.write(f"### Total Perusahaan Dilamar: **{total_lamaran}**")
@@ -273,17 +294,27 @@ if not df.empty and "Hasil" in df.columns:
         with col_s1:
             st.write("📌 **Distribusi Jenis Lamaran:**")
             if "Jenis Lamaran" in df.columns:
-                st.dataframe(df["Jenis Lamaran"].value_counts().reset_index(), use_container_width=True, hide_index=True)
+                st.dataframe(
+                    df["Jenis Lamaran"].value_counts().reset_index(),
+                    use_container_width=True,
+                    hide_index=True,
+                )
         with col_s2:
             st.write("💼 **Daftar Posisi yang Dilamar:**")
             if "Posisi" in df.columns:
-                st.dataframe(df["Posisi"].value_counts().reset_index(), use_container_width=True, hide_index=True)
+                st.dataframe(
+                    df["Posisi"].value_counts().reset_index(),
+                    use_container_width=True,
+                    hide_index=True,
+                )
         st.write("📋 **Seluruh Data Perusahaan:**")
         safe_display_df(df)
 
     @st.dialog("⏳ Daftar Lamaran Tahap Pending / Proses", width="large")
     def show_pending_list():
-        st.write(f"Total data pending saat ini: **{pending_count}** perusahaan")
+        st.write(
+            f"Total data pending saat ini: **{pending_count}** perusahaan"
+        )
         if not pending_df.empty:
             safe_display_df(pending_df)
         else:
@@ -291,7 +322,9 @@ if not df.empty and "Hasil" in df.columns:
 
     @st.dialog("✅ Daftar Lamaran Tahap Lolos / Berhasil", width="large")
     def show_lolos_list():
-        st.write(f"Total data lolos saat ini: **{lolos_count}** perusahaan 🎉")
+        st.write(
+            f"Total data lolos saat ini: **{lolos_count}** perusahaan 🎉"
+        )
         if not lolos_df.empty:
             safe_display_df(lolos_df)
         else:
@@ -305,7 +338,6 @@ if not df.empty and "Hasil" in df.columns:
         else:
             st.info("Tidak ada data lamaran yang gagal.")
 
-    # Trigger pop-up ketika tombol teks di bawah ditekan
     if popup_all:
         show_all_summary()
     elif popup_pending:
@@ -322,11 +354,17 @@ if not df.empty and "Hasil" in df.columns:
     if current_mode == "ALL":
         st.subheader("📊 Analisis & Statistik Distribusi (Semua Lamaran)")
     elif current_mode == "PENDING":
-        st.subheader("⏳ Analisis & Statistik Distribusi (Khusus Pending / Proses)")
+        st.subheader(
+            "⏳ Analisis & Statistik Distribusi (Khusus Pending / Proses)"
+        )
     elif current_mode == "LOLOS":
-        st.subheader("✅ Analisis & Statistik Distribusi (Khusus Lolos / Berhasil)")
+        st.subheader(
+            "✅ Analisis & Statistik Distribusi (Khusus Lolos / Berhasil)"
+        )
     elif current_mode == "GAGAL":
-        st.subheader("❌ Analisis & Statistik Distribusi (Khusus Gagal / Ditolak)")
+        st.subheader(
+            "❌ Analisis & Statistik Distribusi (Khusus Gagal / Ditolak)"
+        )
 
     gcol1, gcol2 = st.columns(2)
 
@@ -349,24 +387,26 @@ if not df.empty and "Hasil" in df.columns:
                 color_discrete_sequence=px.colors.qualitative.Pastel,
             )
             fig_status.update_traces(
-                textinfo='none', 
-                hoverinfo='label+percent+value',
-                rotation=45, 
-                pull=[0.05 if i == 0 else 0 for i in range(len(active_chart_df['Hasil'].unique()))]
+                textinfo="none",
+                hoverinfo="label+percent+value",
+                rotation=45,
             )
             fig_status.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)",
                 font_color="white",
                 plot_bgcolor="rgba(0,0,0,0)",
                 title_font_size=16,
-                transition_duration=1000
+                transition_duration=1000,
             )
             st.plotly_chart(fig_status, use_container_width=True)
         else:
             st.info(f"Tidak ada data untuk kategori {current_mode}.")
 
     with gcol2:
-        if not active_chart_df.empty and "Nemu Loker Di" in active_chart_df.columns:
+        if (
+            not active_chart_df.empty
+            and "Nemu Loker Di" in active_chart_df.columns
+        ):
             fig_platform = px.bar(
                 active_chart_df,
                 x="Nemu Loker Di",
@@ -380,7 +420,7 @@ if not df.empty and "Hasil" in df.columns:
                 plot_bgcolor="rgba(0,0,0,0)",
                 title_font_size=16,
                 showlegend=False,
-                transition_duration=1000
+                transition_duration=1000,
             )
             st.plotly_chart(fig_platform, use_container_width=True)
         else:
@@ -400,11 +440,19 @@ if not df.empty and "Hasil" in df.columns:
         )
 
     with fcol2:
-        platforms = ["Semua"] + list(df["Nemu Loker Di"].unique()) if "Nemu Loker Di" in df.columns else ["Semua"]
+        platforms = (
+            ["Semua"] + list(df["Nemu Loker Di"].unique())
+            if "Nemu Loker Di" in df.columns
+            else ["Semua"]
+        )
         selected_platform = st.selectbox("📌 Filter Sumber Platform", platforms)
 
     with fcol3:
-        work_types = ["Semua"] + list(df["Jenis Kerja"].unique()) if "Jenis Kerja" in df.columns else ["Semua"]
+        work_types = (
+            ["Semua"] + list(df["Jenis Kerja"].unique())
+            if "Jenis Kerja" in df.columns
+            else ["Semua"]
+        )
         selected_work_type = st.selectbox("💼 Filter Jenis Kerja", work_types)
 
     filtered_df = df.copy()
@@ -412,17 +460,29 @@ if not df.empty and "Hasil" in df.columns:
     if search_query:
         filtered_df = filtered_df[
             filtered_df.astype(str)
-            .apply(lambda row: row.str.contains(search_query, case=False).any(), axis=1)
+            .apply(
+                lambda row: row.str.contains(search_query, case=False).any(),
+                axis=1,
+            )
         ]
 
-    if selected_platform != "Semua" and "Nemu Loker Di" in filtered_df.columns:
-        filtered_df = filtered_df[filtered_df["Nemu Loker Di"] == selected_platform]
+    if (
+        selected_platform != "Semua"
+        and "Nemu Loker Di" in filtered_df.columns
+    ):
+        filtered_df = filtered_df[
+            filtered_df["Nemu Loker Di"] == selected_platform
+        ]
 
     if selected_work_type != "Semua" and "Jenis Kerja" in filtered_df.columns:
-        filtered_df = filtered_df[filtered_df["Jenis Kerja"] == selected_work_type]
+        filtered_df = filtered_df[
+            filtered_df["Jenis Kerja"] == selected_work_type
+        ]
 
     st.dataframe(filtered_df, use_container_width=True)
-    st.caption(f"Menampilkan {len(filtered_df)} dari total {len(df)} data lamaran.")
+    st.caption(
+        f"Menampilkan {len(filtered_df)} dari total {len(df)} data lamaran."
+    )
 
 else:
     st.info(
