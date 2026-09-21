@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Tema Angkasa, Tombol Kontras, & Animasi Halus pada Grafik
+# Custom CSS: Tema Angkasa, Tombol Kontras, & Animasi Entrance Halus
 st.markdown(
     """
     <style>
@@ -68,14 +68,20 @@ st.markdown(
         letter-spacing: 1px;
     }
 
-    /* Efek Animasi Halus untuk Kotak Grafik */
+    /* Animasi Smooth Muncul & Memutar Pelan untuk Kotak Grafik */
     div.element-container:has(iframe) {
-        animation: chartFadeIn 0.8s ease-in-out;
+        animation: smoothChartEntry 0.9s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
-    @keyframes chartFadeIn {
-        from { opacity: 0; transform: scale(0.98); }
-        to { opacity: 1; transform: scale(1); }
+    @keyframes smoothChartEntry {
+        0% {
+            opacity: 0;
+            transform: scale(0.92) translateY(15px);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
     }
     </style>
 """,
@@ -87,7 +93,7 @@ st.markdown(
     """
     <div class="hero-container">
         <h1>🚀 Space Job Application Tracker</h1>
-        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan animasi grafik dinamis dan pemantauan real-time.</p>
+        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan animasi grafik halus dan pemantauan real-time.</p>
     </div>
 """,
     unsafe_allow_html=True,
@@ -308,7 +314,7 @@ if not df.empty and "Hasil" in df.columns:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- BAGIAN GRAFIK INTERAKTIF & DINAMIS ---
+    # --- BAGIAN GRAFIK INTERAKTIF DENGAN ANIMASI HALUS ---
     current_mode = st.session_state.active_view
     if current_mode == "ALL":
         st.subheader("📊 Analisis & Statistik Distribusi (Semua Lamaran)")
@@ -332,8 +338,6 @@ if not df.empty and "Hasil" in df.columns:
 
     with gcol1:
         if not active_chart_df.empty and "Hasil" in active_chart_df.columns:
-            # Menggunakan textinfo='' agar angka/persen yang menumpuk tidak muncul di chart,
-            # melainkan muncul interaktif saat di-hover atau diklik.
             fig_status = px.pie(
                 active_chart_df,
                 names="Hasil",
@@ -341,17 +345,19 @@ if not df.empty and "Hasil" in df.columns:
                 hole=0.5,
                 color_discrete_sequence=px.colors.qualitative.Pastel,
             )
+            # Tanpa teks angka menumpuk, muncul detail pas di-hover
             fig_status.update_traces(
                 textinfo='none', 
                 hoverinfo='label+percent+value',
-                pull=[0.05 if i == 0 else 0 for i in range(len(active_chart_df['Hasil'].unique()))] # Efek sedikit keluar untuk interaktivitas
+                rotation=45, # Memutar sedikit posisi awal donat agar dinamis
+                pull=[0.05 if i == 0 else 0 for i in range(len(active_chart_df['Hasil'].unique()))]
             )
             fig_status.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)",
                 font_color="white",
                 plot_bgcolor="rgba(0,0,0,0)",
                 title_font_size=16,
-                transition_duration=500 # Animasi transisi halus saat ganti data
+                transition_duration=800 # Durasi transisi mutar/geser jadi jauh lebih lembut
             )
             st.plotly_chart(fig_status, use_container_width=True)
         else:
@@ -372,7 +378,7 @@ if not df.empty and "Hasil" in df.columns:
                 plot_bgcolor="rgba(0,0,0,0)",
                 title_font_size=16,
                 showlegend=False,
-                transition_duration=500
+                transition_duration=800
             )
             st.plotly_chart(fig_platform, use_container_width=True)
         else:
