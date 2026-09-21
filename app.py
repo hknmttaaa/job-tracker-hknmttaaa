@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Tema Angkasa, Kartu Metrik Interaktif, & Animasi Grafik Smooth
+# Custom CSS: Desain Kotak Metrik Asli + Animasi Grafik Smooth & Elegan
 st.markdown(
     """
     <style>
@@ -43,15 +43,37 @@ st.markdown(
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Animasi Smooth Entrance untuk Kontainer Grafik */
+    /* Styling tombol Streamlit agar menyerupai kartu metrik persis seperti gambar */
+    div.stButton > button {
+        width: 100%;
+        border-radius: 12px;
+        color: white;
+        border: none;
+        padding: 20px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s ease, filter 0.2s ease;
+    }
+    div.stButton > button:hover {
+        transform: translateY(-3px);
+        filter: brightness(1.1);
+    }
+
+    /* Warna latar belakang tombol per kategori sesuai desain asli */
+    div.stButton:nth-of-type(1) > button { background: linear-gradient(135deg, #2980b9, #3498db); }
+    div.stButton:nth-of-type(2) > button { background: linear-gradient(135deg, #f39c12, #d35400); }
+    div.stButton:nth-of-type(3) > button { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+    div.stButton:nth-of-type(4) > button { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+
+    /* Animasi Smooth Entrance untuk Kontainer Grafik agar muncul mengalir & tidak kaku */
     div.element-container:has(iframe) {
-        animation: smoothChartEntry 1s cubic-bezier(0.25, 1, 0.5, 1);
+        animation: smoothChartEntry 0.9s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
     @keyframes smoothChartEntry {
         0% {
             opacity: 0;
-            transform: scale(0.95) translateY(12px);
+            transform: scale(0.96) translateY(15px);
         }
         100% {
             opacity: 1;
@@ -171,123 +193,24 @@ if not df.empty and "Hasil" in df.columns:
     lolos_count = len(lolos_df)
     gagal_count = len(gagal_df)
 
-    # 4 Kolom Kotak Metrik Utama (Desain Asli Dipertahankan + Fungsi Tombol Grafik)
+    # 4 Kotak Kartu Metrik Utama yang Berfungsi Sekaligus sebagai Tombol Interaktif Grafik
     mcol1, mcol2, mcol3, mcol4 = st.columns(4)
 
     with mcol1:
-        st.markdown(
-            f"""
-            <div style="background: linear-gradient(135deg, #2980b9, #3498db); padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); margin-bottom: 10px;">
-                <div style="font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Total Lamaran</div>
-                <div style="font-size: 28px; font-weight: 700; margin-top: 5px;">{total_lamaran}</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-        box_all = st.button("📁 Lihat Semua", use_container_width=True, type="primary")
+        if st.button(f"TOTAL LAMARAN\n\n{total_lamaran}", key="btn_all"):
+            st.session_state.active_view = "ALL"
 
     with mcol2:
-        st.markdown(
-            f"""
-            <div style="background: linear-gradient(135deg, #f39c12, #d35400); padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); margin-bottom: 10px;">
-                <div style="font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Pending / Proses</div>
-                <div style="font-size: 28px; font-weight: 700; margin-top: 5px;">{pending_count}</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-        box_pending = st.button("⏳ Lihat Pending", use_container_width=True)
+        if st.button(f"PENDING / PROSES\n\n{pending_count}", key="btn_pending"):
+            st.session_state.active_view = "PENDING"
 
     with mcol3:
-        st.markdown(
-            f"""
-            <div style="background: linear-gradient(135deg, #27ae60, #2ecc71); padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); margin-bottom: 10px;">
-                <div style="font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Lolos / Berhasil</div>
-                <div style="font-size: 28px; font-weight: 700; margin-top: 5px;">{lolos_count}</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-        box_lolos = st.button("✅ Lihat Lolos", use_container_width=True)
+        if st.button(f"LOLOS / BERHASIL\n\n{lolos_count}", key="btn_lolos"):
+            st.session_state.active_view = "LOLOS"
 
     with mcol4:
-        st.markdown(
-            f"""
-            <div style="background: linear-gradient(135deg, #c0392b, #e74c3c); padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); margin-bottom: 10px;">
-                <div style="font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Gagal / Ditolak</div>
-                <div style="font-size: 28px; font-weight: 700; margin-top: 5px;">{gagal_count}</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-        box_gagal = st.button("❌ Lihat Gagal", use_container_width=True)
-
-    # Logika Pengaturan Mode Grafik Berdasarkan Tombol di Bawah Masing-Masing Kotak
-    if box_all:
-        st.session_state.active_view = "ALL"
-    elif box_pending:
-        st.session_state.active_view = "PENDING"
-    elif box_lolos:
-        st.session_state.active_view = "LOLOS"
-    elif box_gagal:
-        st.session_state.active_view = "GAGAL"
-
-    def safe_display_df(data_frame):
-        available_cols = [c for c in ["Perusahaan", "Posisi", "Tanggal Lamar", "Nemu Loker Di", "Jenis Lamaran", "Hasil"] if c in data_frame.columns]
-        if available_cols:
-            st.dataframe(data_frame[available_cols], use_container_width=True)
-        else:
-            st.dataframe(data_frame, use_container_width=True)
-
-    # --- POP-UP LIST DETAIL DATA ---
-    @st.dialog("📊 Ringkasan Keseluruhan Lamaran", width="large")
-    def show_all_summary():
-        st.write(f"### Total Perusahaan Dilamar: **{total_lamaran}**")
-        col_s1, col_s2 = st.columns(2)
-        with col_s1:
-            st.write("📌 **Distribusi Jenis Lamaran:**")
-            if "Jenis Lamaran" in df.columns:
-                st.dataframe(df["Jenis Lamaran"].value_counts().reset_index(), use_container_width=True, hide_index=True)
-        with col_s2:
-            st.write("💼 **Daftar Posisi yang Dilamar:**")
-            if "Posisi" in df.columns:
-                st.dataframe(df["Posisi"].value_counts().reset_index(), use_container_width=True, hide_index=True)
-        st.write("📋 **Seluruh Data Perusahaan:**")
-        safe_display_df(df)
-
-    @st.dialog("⏳ Daftar Lamaran Tahap Pending / Proses", width="large")
-    def show_pending_list():
-        st.write(f"Total data pending saat ini: **{pending_count}** perusahaan")
-        if not pending_df.empty:
-            safe_display_df(pending_df)
-        else:
-            st.info("Tidak ada data lamaran dengan status pending.")
-
-    @st.dialog("✅ Daftar Lamaran Tahap Lolos / Berhasil", width="large")
-    def show_lolos_list():
-        st.write(f"Total data lolos saat ini: **{lolos_count}** perusahaan 🎉")
-        if not lolos_df.empty:
-            safe_display_df(lolos_df)
-        else:
-            st.info("Belum ada data lamaran yang lolos.")
-
-    @st.dialog("❌ Daftar Lamaran Tahap Gagal / Ditolak", width="large")
-    def show_gagal_list():
-        st.write(f"Total data gagal saat ini: **{gagal_count}** perusahaan")
-        if not gagal_df.empty:
-            safe_display_df(gagal_df)
-        else:
-            st.info("Tidak ada data lamaran yang gagal.")
-
-    # Trigger pop-up ketika tombol masing-masing ditekan
-    if box_all:
-        show_all_summary()
-    elif box_pending:
-        show_pending_list()
-    elif box_lolos:
-        show_lolos_list()
-    elif box_gagal:
-        show_gagal_list()
+        if st.button(f"GAGAL / DITOLAK\n\n{gagal_count}", key="btn_gagal"):
+            st.session_state.active_view = "GAGAL"
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -322,7 +245,7 @@ if not df.empty and "Hasil" in df.columns:
                 hole=0.5,
                 color_discrete_sequence=px.colors.qualitative.Pastel,
             )
-            # Tanpa teks angka acak menumpuk, muncul rapi interaktif saat di-hover atau diklik
+            # Tanpa angka persen menumpuk yang mengganggu, muncul interaktif saat di-hover
             fig_status.update_traces(
                 textinfo='none', 
                 hoverinfo='label+percent+value',
