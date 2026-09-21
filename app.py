@@ -35,44 +35,66 @@ st.markdown(
         border-radius: 16px;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         margin-bottom: 25px;
-        animation: fadeIn 1s ease-in-out;
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Mengembalikan ukuran tinggi dan tampilan tombol kartu metrik atas agar besar seperti semula */
-    div.metric-all button,
-    div.metric-pending button,
-    div.metric-lolos button,
-    div.metric-gagal button {
-        width: 100% !important;
-        height: 95px !important;
+    /* Memaksa tombol atas berubah warna dan ukuran besar dengan selector yang lebih kuat */
+    div.metric-all button[kind="secondary"] {
+        background: linear-gradient(135deg, #f39c12, #d35400) !important; /* Oranye */
+        color: #ffffff !important;
         border: none !important;
-        border-radius: 12px !important;
-        color: white !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        border-radius: 14px !important;
+        padding: 24px 20px !important;
+        height: 115px !important;
+        width: 100% !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
         font-weight: 700 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        transition: all 0.2s ease-in-out;
     }
 
-    div.metric-all button { background: linear-gradient(135deg, #2980b9, #3498db) !important; }
-    div.metric-pending button { background: linear-gradient(135deg, #f39c12, #d35400) !important; }
-    div.metric-lolos button { background: linear-gradient(135deg, #27ae60, #2ecc71) !important; }
-    div.metric-gagal button { background: linear-gradient(135deg, #c0392b, #e74c3c) !important; }
+    div.metric-pending button[kind="secondary"] {
+        background: linear-gradient(135deg, #f1c40f, #f39c12) !important; /* Kuning */
+        color: #1a1a1a !important; /* Teks gelap agar jelas di atas warna kuning */
+        border: none !important;
+        border-radius: 14px !important;
+        padding: 24px 20px !important;
+        height: 115px !important;
+        width: 100% !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        font-weight: 700 !important;
+    }
 
-    div[class*="metric-"] button:hover {
-        transform: translateY(-2px);
+    div.metric-lolos button[kind="secondary"] {
+        background: linear-gradient(135deg, #27ae60, #2ecc71) !important; /* Hijau */
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 14px !important;
+        padding: 24px 20px !important;
+        height: 115px !important;
+        width: 100% !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        font-weight: 700 !important;
+    }
+
+    div.metric-gagal button[kind="secondary"] {
+        background: linear-gradient(135deg, #c0392b, #e74c3c) !important; /* Merah */
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 14px !important;
+        padding: 24px 20px !important;
+        height: 115px !important;
+        width: 100% !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        font-weight: 700 !important;
+    }
+
+    /* Efek hover */
+    div[class*="metric-"] button[kind="secondary"]:hover {
+        transform: translateY(-3px);
         filter: brightness(1.1);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+        color: inherit !important;
     }
 
-    /* Styling tombol pop-up kecil di bawah */
+    /* Styling tombol teks kecil di bawah (supaya tidak ikut besar) */
     .stButton > button {
         background-color: #1e293b !important;
         color: #e2e8f0 !important;
@@ -85,15 +107,6 @@ st.markdown(
         background-color: #334155 !important;
         color: #ffffff !important;
         border-color: #38bdf8 !important;
-    }
-
-    div.element-container:has(iframe) {
-        animation: smoothChartEntry 1s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-
-    @keyframes smoothChartEntry {
-        0% { opacity: 0; transform: scale(0.95) translateY(12px); }
-        100% { opacity: 1; transform: scale(1) translateY(0); }
     }
     </style>
 """,
