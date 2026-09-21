@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Tema Angkasa, Kartu Metrik Interaktif, & Animasi Grafik Smooth
+# Custom CSS: Tema Angkasa, Kartu Metrik Interaktif, & Warna Tombol Pop-up Kontras
 st.markdown(
     """
     <style>
@@ -41,6 +41,21 @@ st.markdown(
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(-10px); }
         to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Styling khusus untuk tombol-tombol pop-up di bawah kartu metrik agar warnanya pas & teks terlihat jelas */
+    .stButton > button {
+        background-color: #1e293b !important;
+        color: #e2e8f0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .stButton > button:hover {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+        border-color: #38bdf8 !important;
     }
 
     /* Animasi Smooth Entrance untuk Kontainer Grafik */
@@ -322,7 +337,6 @@ if not df.empty and "Hasil" in df.columns:
                 hole=0.5,
                 color_discrete_sequence=px.colors.qualitative.Pastel,
             )
-            # Tanpa teks angka acak menumpuk, muncul rapi interaktif saat di-hover atau diklik
             fig_status.update_traces(
                 textinfo='none', 
                 hoverinfo='label+percent+value',
@@ -334,7 +348,7 @@ if not df.empty and "Hasil" in df.columns:
                 font_color="white",
                 plot_bgcolor="rgba(0,0,0,0)",
                 title_font_size=16,
-                transition_duration=1000 # Transisi mutar & ganti data super smooth
+                transition_duration=1000
             )
             st.plotly_chart(fig_status, use_container_width=True)
         else:
