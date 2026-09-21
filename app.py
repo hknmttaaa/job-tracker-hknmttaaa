@@ -201,7 +201,7 @@ if not df.empty and "Hasil" in df.columns:
     with mcol3:
         st.markdown(
             f"""
-            <div style="background: linear-gradient(135deg, #27ae60, #2ecc71); padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); margin-bottom: 10px;">
+            <div style="background: linear-gradient(135deg, #f39c12, #d35400); padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); margin-bottom: 10px;">
                 <div style="font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Lolos / Berhasil</div>
                 <div style="font-size: 28px; font-weight: 700; margin-top: 5px;">{lolos_count}</div>
             </div>
@@ -213,7 +213,7 @@ if not df.empty and "Hasil" in df.columns:
     with mcol4:
         st.markdown(
             f"""
-            <div style="background: linear-gradient(135deg, #c0392b, #e74c3c); padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); margin-bottom: 10px;">
+            <div style="background: linear-gradient(135deg, #f39c12, #d35400); padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); margin-bottom: 10px;">
                 <div style="font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Gagal / Ditolak</div>
                 <div style="font-size: 28px; font-weight: 700; margin-top: 5px;">{gagal_count}</div>
             </div>
