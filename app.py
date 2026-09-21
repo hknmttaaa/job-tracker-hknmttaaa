@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Tema Angkasa, Kartu Metrik Interaktif, & Warna Tombol Pop-up Kontras
+# Custom CSS: Tema Angkasa & Styling Tombol Metrik Interaktif Berwarna
 st.markdown(
     """
     <style>
@@ -43,19 +43,39 @@ st.markdown(
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Styling khusus untuk tombol-tombol pop-up di bawah kartu metrik agar warnanya pas & teks terlihat jelas */
-    .stButton > button {
-        background-color: #1e293b !important;
-        color: #e2e8f0 !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        font-weight: 600 !important;
-        transition: all 0.2s ease-in-out;
+    /* Styling 4 Tombol Metrik Utama Sesuai Warna Aslinya */
+    div[data-testid="column"]:nth-of-type(1) div.stButton > button {
+        background: linear-gradient(135deg, #2980b9, #3498db) !important;
+        width: 100%; border-radius: 12px; color: white !important; border: none; padding: 20px;
+        font-family: 'Plus Jakarta Sans', sans-serif; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s ease, filter 0.2s ease;
+        font-weight: 700; font-size: 16px;
     }
-    
-    .stButton > button:hover {
-        background-color: #334155 !important;
-        color: #ffffff !important;
-        border-color: #38bdf8 !important;
+    div[data-testid="column"]:nth-of-type(2) div.stButton > button {
+        background: linear-gradient(135deg, #f39c12, #d35400) !important;
+        width: 100%; border-radius: 12px; color: white !important; border: none; padding: 20px;
+        font-family: 'Plus Jakarta Sans', sans-serif; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s ease, filter 0.2s ease;
+        font-weight: 700; font-size: 16px;
+    }
+    div[data-testid="column"]:nth-of-type(3) div.stButton > button {
+        background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+        width: 100%; border-radius: 12px; color: white !important; border: none; padding: 20px;
+        font-family: 'Plus Jakarta Sans', sans-serif; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s ease, filter 0.2s ease;
+        font-weight: 700; font-size: 16px;
+    }
+    div[data-testid="column"]:nth-of-type(4) div.stButton > button {
+        background: linear-gradient(135deg, #c0392b, #e74c3c) !important;
+        width: 100%; border-radius: 12px; color: white !important; border: none; padding: 20px;
+        font-family: 'Plus Jakarta Sans', sans-serif; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s ease, filter 0.2s ease;
+        font-weight: 700; font-size: 16px;
+    }
+
+    div[data-testid="column"] div.stButton > button:hover {
+        transform: translateY(-3px);
+        filter: brightness(1.1);
     }
 
     /* Animasi Smooth Entrance untuk Kontainer Grafik */
@@ -186,65 +206,26 @@ if not df.empty and "Hasil" in df.columns:
     lolos_count = len(lolos_df)
     gagal_count = len(gagal_df)
 
-    # 4 Kolom Kotak Metrik Utama (Desain Asli Dipertahankan + Fungsi Tombol Grafik)
+    # 4 Kotak Metrik Utama yang Langsung Berfungsi sebagai Tombol Interaktif
     mcol1, mcol2, mcol3, mcol4 = st.columns(4)
 
     with mcol1:
-        st.markdown(
-            f"""
-            <div style="background: linear-gradient(135deg, #2980b9, #3498db); padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); margin-bottom: 10px;">
-                <div style="font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Total Lamaran</div>
-                <div style="font-size: 28px; font-weight: 700; margin-top: 5px;">{total_lamaran}</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-        box_all = st.button("📁 Lihat Semua", use_container_width=True, type="primary")
-
+        btn_all = st.button(f"📁 TOTAL LAMARAN\n\n{total_lamaran}", key="btn_all")
     with mcol2:
-        st.markdown(
-            f"""
-            <div style="background: linear-gradient(135deg, #f39c12, #d35400); padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); margin-bottom: 10px;">
-                <div style="font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Pending / Proses</div>
-                <div style="font-size: 28px; font-weight: 700; margin-top: 5px;">{pending_count}</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-        box_pending = st.button("⏳ Lihat Pending", use_container_width=True)
-
+        btn_pending = st.button(f"⏳ PENDING / PROSES\n\n{pending_count}", key="btn_pending")
     with mcol3:
-        st.markdown(
-            f"""
-            <div style="background: linear-gradient(135deg, #27ae60, #2ecc71); padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); margin-bottom: 10px;">
-                <div style="font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Lolos / Berhasil</div>
-                <div style="font-size: 28px; font-weight: 700; margin-top: 5px;">{lolos_count}</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-        box_lolos = st.button("✅ Lihat Lolos", use_container_width=True)
-
+        btn_lolos = st.button(f"✅ LOLOS / BERHASIL\n\n{lolos_count}", key="btn_lolos")
     with mcol4:
-        st.markdown(
-            f"""
-            <div style="background: linear-gradient(135deg, #c0392b, #e74c3c); padding: 20px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); margin-bottom: 10px;">
-                <div style="font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Gagal / Ditolak</div>
-                <div style="font-size: 28px; font-weight: 700; margin-top: 5px;">{gagal_count}</div>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-        box_gagal = st.button("❌ Lihat Gagal", use_container_width=True)
+        btn_gagal = st.button(f"❌ GAGAL / DITOLAK\n\n{gagal_count}", key="btn_gagal")
 
-    # Logika Pengaturan Mode Grafik Berdasarkan Tombol di Bawah Masing-Masing Kotak
-    if box_all:
+    # Logika Pengaturan Mode Grafik Berdasarkan Tombol yang Ditekan
+    if btn_all:
         st.session_state.active_view = "ALL"
-    elif box_pending:
+    elif btn_pending:
         st.session_state.active_view = "PENDING"
-    elif box_lolos:
+    elif btn_lolos:
         st.session_state.active_view = "LOLOS"
-    elif box_gagal:
+    elif btn_gagal:
         st.session_state.active_view = "GAGAL"
 
     def safe_display_df(data_frame):
@@ -295,13 +276,13 @@ if not df.empty and "Hasil" in df.columns:
             st.info("Tidak ada data lamaran yang gagal.")
 
     # Trigger pop-up ketika tombol masing-masing ditekan
-    if box_all:
+    if btn_all:
         show_all_summary()
-    elif box_pending:
+    elif btn_pending:
         show_pending_list()
-    elif box_lolos:
+    elif btn_lolos:
         show_lolos_list()
-    elif box_gagal:
+    elif btn_gagal:
         show_gagal_list()
 
     st.markdown("<br>", unsafe_allow_html=True)
