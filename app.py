@@ -100,6 +100,8 @@ try:
     sheet = client.open_by_url(sheet_url).worksheet("Sheet1")
     data = sheet.get_all_records()
     df = pd.DataFrame(data)
+    # Bersihkan nama kolom dari spasi berlebih jika ada
+    df.columns = df.columns.str.strip()
 except Exception as e:
     st.error(
         f"Gagal terhubung ke Google Sheets. Pastikan format Secrets benar. Error: {e}"
@@ -162,7 +164,7 @@ with st.sidebar.form("add_form", clear_on_submit=True):
             st.warning("Nama Perusahaan dan Posisi wajib diisi!")
 
 # --- DASHBOARD UTAMA ---
-if not df.empty:
+if not df.empty and "Hasil" in df.columns:
     # Hitung Statistik
     total_lamaran = len(df)
     pending_df = df[df["Hasil"].str.contains("PENDING|MENUNGGU", case=False, na=False)]
@@ -224,6 +226,14 @@ if not df.empty:
         )
         btn_gagal = st.button("❌ Lihat Gagal", use_container_width=True)
 
+    # Fungsi helper untuk menampilkan dataframe secara aman berdasarkan kolom yang ada
+    def safe_display_df(data_frame):
+        available_cols = [c for c in ["Perusahaan", "Posisi", "Tanggal Lamar", "Nemu Loker Di", "Jenis Lamaran", "Hasil"] if c in data_frame.columns]
+        if available_cols:
+            st.dataframe(data_frame[available_cols], use_container_width=True)
+        else:
+            st.dataframe(data_frame, use_container_width=True)
+
     # --- DEFINISI POP-UP (MODAL) ---
     @st.dialog("📊 Ringkasan Keseluruhan Lamaran", width="large")
     def show_all_summary():
@@ -240,13 +250,13 @@ if not df.empty:
                 st.dataframe(df["Posisi"].value_counts().reset_index(), use_container_width=True, hide_index=True)
         
         st.write("📋 **Seluruh Data Perusahaan:**")
-        st.dataframe(df[["Perusahaan", "Posisi", "Jenis Lamaran", "Hasil"]], use_container_width=True)
+        safe_display_df(df)
 
     @st.dialog("⏳ Daftar Lamaran Tahap Pending / Proses", width="large")
     def show_pending_list():
         st.write(f"Total data pending saat ini: **{pending_count}** perusahaan")
         if not pending_df.empty:
-            st.dataframe(pending_df[["Perusahaan", "Posisi", "Tanggal Lamar", "Nemu Loker Di", "Hasil"]], use_container_width=True)
+            safe_display_df(pending_df)
         else:
             st.info("Tidak ada data lamaran dengan status pending.")
 
@@ -254,7 +264,7 @@ if not df.empty:
     def show_lolos_list():
         st.write(f"Total data lolos saat ini: **{lolos_count}** perusahaan 🎉")
         if not lolos_df.empty:
-            st.dataframe(lolos_df[["Perusahaan", "Posisi", "Tanggal Lamar", "Nemu Loker Di", "Hasil"]], use_container_width=True)
+            safe_display_df(lolos_df)
         else:
             st.info("Belum ada data lamaran yang lolos.")
 
@@ -262,7 +272,7 @@ if not df.empty:
     def show_gagal_list():
         st.write(f"Total data gagal saat ini: **{gagal_count}** perusahaan")
         if not gagal_df.empty:
-            st.dataframe(gagal_df[["Perusahaan", "Posisi", "Tanggal Lamar", "Nemu Loker Di", "Hasil"]], use_container_width=True)
+            safe_display_df(gagal_df)
         else:
             st.info("Tidak ada data lamaran yang gagal.")
 
@@ -283,21 +293,20 @@ if not df.empty:
     gcol1, gcol2 = st.columns(2)
 
     with gcol1:
-        if "Hasil" in df.columns:
-            fig_status = px.pie(
-                df,
-                names="Hasil",
-                title="Proporsi Status Hasil Lamaran",
-                hole=0.4,
-                color_discrete_sequence=px.colors.qualitative.Pastel,
-            )
-            fig_status.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)",
-                font_color="white",
-                plot_bgcolor="rgba(0,0,0,0)",
-                title_font_size=16,
-            )
-            st.plotly_chart(fig_status, use_container_width=True)
+        fig_status = px.pie(
+            df,
+            names="Hasil",
+            title="Proporsi Status Hasil Lamaran",
+            hole=0.4,
+            color_discrete_sequence=px.colors.qualitative.Pastel,
+        )
+        fig_status.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            font_color="white",
+            plot_bgcolor="rgba(0,0,0,0)",
+            title_font_size=16,
+        )
+        st.plotly_chart(fig_status, use_container_width=True)
 
     with gcol2:
         if "Nemu Loker Di" in df.columns:
@@ -347,10 +356,10 @@ if not df.empty:
             .apply(lambda row: row.str.contains(search_query, case=False).any(), axis=1)
         ]
 
-    if selected_platform != "Semua":
+    if selected_platform != "Semua" and "Nemu Loker Di" in filtered_df.columns:
         filtered_df = filtered_df[filtered_df["Nemu Loker Di"] == selected_platform]
 
-    if selected_work_type != "Semua":
+    if selected_work_type != "Semua" and "Jenis Kerja" in filtered_df.columns:
         filtered_df = filtered_df[filtered_df["Jenis Kerja"] == selected_work_type]
 
     st.dataframe(filtered_df, use_container_width=True)
