@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Tema Angkasa, Tombol Warna-Warni Kontras, & Styling Modal
+# Custom CSS: Tema Angkasa, Tombol Kontras, & Animasi Halus pada Grafik
 st.markdown(
     """
     <style>
@@ -50,6 +50,10 @@ st.markdown(
         text-align: center;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         margin-bottom: 10px;
+        transition: transform 0.3s ease;
+    }
+    .metric-card:hover {
+        transform: translateY(-4px);
     }
     
     .metric-value {
@@ -63,6 +67,16 @@ st.markdown(
         text-transform: uppercase;
         letter-spacing: 1px;
     }
+
+    /* Efek Animasi Halus untuk Kotak Grafik */
+    div.element-container:has(iframe) {
+        animation: chartFadeIn 0.8s ease-in-out;
+    }
+
+    @keyframes chartFadeIn {
+        from { opacity: 0; transform: scale(0.98); }
+        to { opacity: 1; transform: scale(1); }
+    }
     </style>
 """,
     unsafe_allow_html=True,
@@ -73,7 +87,7 @@ st.markdown(
     """
     <div class="hero-container">
         <h1>🚀 Space Job Application Tracker</h1>
-        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan grafik dinamis per kategori dan pemantauan real-time.</p>
+        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan animasi grafik dinamis dan pemantauan real-time.</p>
     </div>
 """,
     unsafe_allow_html=True,
@@ -164,11 +178,9 @@ with st.sidebar.form("add_form", clear_on_submit=True):
 
 # --- DASHBOARD UTAMA ---
 if not df.empty and "Hasil" in df.columns:
-    # Inisialisasi Session State untuk mode grafik aktif & pop-up
     if "active_view" not in st.session_state:
         st.session_state.active_view = "ALL"
 
-    # Hitung Subset Data
     total_lamaran = len(df)
     pending_df = df[df["Hasil"].str.contains("PENDING|MENUNGGU", case=False, na=False)]
     lolos_df = df[df["Hasil"].str.contains("LOLOS|BERHASIL", case=False, na=False)]
@@ -229,7 +241,7 @@ if not df.empty and "Hasil" in df.columns:
         )
         btn_gagal = st.button("❌ Lihat Gagal", use_container_width=True)
 
-    # Logika Ubah Mode Grafik Saat Tombol Diklik
+    # Logika Ubah Mode Grafik & Pop-up
     if btn_all:
         st.session_state.active_view = "ALL"
     elif btn_pending:
@@ -239,7 +251,6 @@ if not df.empty and "Hasil" in df.columns:
     elif btn_gagal:
         st.session_state.active_view = "GAGAL"
 
-    # Fungsi helper untuk menampilkan dataframe secara aman
     def safe_display_df(data_frame):
         available_cols = [c for c in ["Perusahaan", "Posisi", "Tanggal Lamar", "Nemu Loker Di", "Jenis Lamaran", "Hasil"] if c in data_frame.columns]
         if available_cols:
@@ -247,7 +258,6 @@ if not df.empty and "Hasil" in df.columns:
         else:
             st.dataframe(data_frame, use_container_width=True)
 
-    # --- DEFINISI POP-UP (MODAL) ---
     @st.dialog("📊 Ringkasan Keseluruhan Lamaran", width="large")
     def show_all_summary():
         st.write(f"### Total Perusahaan Dilamar: **{total_lamaran}**")
@@ -287,7 +297,6 @@ if not df.empty and "Hasil" in df.columns:
         else:
             st.info("Tidak ada data lamaran yang gagal.")
 
-    # Trigger Pop-up berdasarkan tombol yang ditekan
     if btn_all:
         show_all_summary()
     elif btn_pending:
@@ -299,7 +308,7 @@ if not df.empty and "Hasil" in df.columns:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- BAGIAN GRAFIK DINAMIS BERDASARKAN TOMBOL AKTIF ---
+    # --- BAGIAN GRAFIK INTERAKTIF & DINAMIS ---
     current_mode = st.session_state.active_view
     if current_mode == "ALL":
         st.subheader("📊 Analisis & Statistik Distribusi (Semua Lamaran)")
@@ -312,7 +321,6 @@ if not df.empty and "Hasil" in df.columns:
 
     gcol1, gcol2 = st.columns(2)
 
-    # Tentukan dataset yang akan digrafikkan berdasarkan mode aktif
     if current_mode == "PENDING":
         active_chart_df = pending_df
     elif current_mode == "LOLOS":
@@ -324,18 +332,26 @@ if not df.empty and "Hasil" in df.columns:
 
     with gcol1:
         if not active_chart_df.empty and "Hasil" in active_chart_df.columns:
+            # Menggunakan textinfo='' agar angka/persen yang menumpuk tidak muncul di chart,
+            # melainkan muncul interaktif saat di-hover atau diklik.
             fig_status = px.pie(
                 active_chart_df,
                 names="Hasil",
                 title=f"Proporsi Status ({current_mode})",
-                hole=0.4,
+                hole=0.5,
                 color_discrete_sequence=px.colors.qualitative.Pastel,
+            )
+            fig_status.update_traces(
+                textinfo='none', 
+                hoverinfo='label+percent+value',
+                pull=[0.05 if i == 0 else 0 for i in range(len(active_chart_df['Hasil'].unique()))] # Efek sedikit keluar untuk interaktivitas
             )
             fig_status.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)",
                 font_color="white",
                 plot_bgcolor="rgba(0,0,0,0)",
                 title_font_size=16,
+                transition_duration=500 # Animasi transisi halus saat ganti data
             )
             st.plotly_chart(fig_status, use_container_width=True)
         else:
@@ -356,6 +372,7 @@ if not df.empty and "Hasil" in df.columns:
                 plot_bgcolor="rgba(0,0,0,0)",
                 title_font_size=16,
                 showlegend=False,
+                transition_duration=500
             )
             st.plotly_chart(fig_platform, use_container_width=True)
         else:
@@ -382,7 +399,6 @@ if not df.empty and "Hasil" in df.columns:
         work_types = ["Semua"] + list(df["Jenis Kerja"].unique()) if "Jenis Kerja" in df.columns else ["Semua"]
         selected_work_type = st.selectbox("💼 Filter Jenis Kerja", work_types)
 
-    # Logika Pemfilteran Data Tabel Bawah
     filtered_df = df.copy()
 
     if search_query:
