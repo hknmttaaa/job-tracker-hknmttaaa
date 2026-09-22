@@ -2,7 +2,6 @@ from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 
 # Konfigurasi Halaman & Layout Lebar
@@ -74,6 +73,7 @@ st.markdown(
         color: #e2e8f0 !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         font-weight: 600 !important;
+        width: 100% !important;
     }
     
     .stButton > button:hover {
@@ -91,7 +91,7 @@ st.markdown(
     """
     <div class="hero-container">
         <h1>🚀 Space Job Application Tracker</h1>
-        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan grafik dinamis dan pemantauan real-time.</p>
+        <p style="margin: 0; color: #a0aec0; font-size: 16px;">Pusat kendali karier interaktif dengan pemantauan real-time.</p>
     </div>
 """,
     unsafe_allow_html=True,
@@ -120,7 +120,6 @@ try:
     df = pd.DataFrame(data)
 
     if not df.empty:
-        # Bersihkan spasi di nama kolom agar seragam
         df.columns = df.columns.astype(str).str.strip()
 except Exception as e:
     st.error(
@@ -199,7 +198,6 @@ elif menu_mode == "✏️ Edit / 🗑️ Hapus Data":
     )
 
     if not df.empty:
-        # Cari kolom perusahaan secara dinamis (mengantisipasi perbedaan huruf kapital)
         col_perusahaan = next(
             (
                 c
@@ -218,7 +216,6 @@ elif menu_mode == "✏️ Edit / 🗑️ Hapus Data":
         )
 
         if col_perusahaan:
-            # Buat label pilihan unik untuk dropdown
             df["Display_Label"] = (
                 df.index.astype(str)
                 + ". "
@@ -268,7 +265,6 @@ elif menu_mode == "✏️ Edit / 🗑️ Hapus Data":
                     "Nama Perusahaan*", value=p_val
                 )
 
-                # Tanggal Lamar
                 tgl_lamar_col = next(
                     (
                         c
@@ -435,9 +431,7 @@ elif menu_mode == "✏️ Edit / 🗑️ Hapus Data":
                 update_btn = col_sub1.form_submit_button(label="💾 Update Data")
                 delete_btn = col_sub2.form_submit_button(label="🗑️ Hapus Data")
 
-                sheet_row_number = (
-                    selected_idx + 2
-                )  # Baris header di Sheets adalah 1
+                sheet_row_number = selected_idx + 2
 
                 if update_btn:
                     if e_perusahaan and e_posisi:
@@ -474,25 +468,19 @@ elif menu_mode == "✏️ Edit / 🗑️ Hapus Data":
                     st.rerun()
         else:
             st.sidebar.warning(
-                "Kolom 'Perusahaan' tidak ditemukan di Google Sheets. Pastikan header baris pertama sudah benar."
+                "Kolom 'Perusahaan' tidak ditemukan di Google Sheets."
             )
     else:
-        st.sidebar.info(
-            "Tidak ada data di Google Sheets atau spreadsheet masih kosong."
-        )
+        st.sidebar.info("Tidak ada data di Google Sheets.")
 
 
-# --- DASHBOARD UTAMA ---
-# Cari kolom hasil secara fleksibel untuk dashboard
+# --- DASHBOARD UTAMA (KARTU METRIK & TOMBOL DETAIL DI BAWAHNYA) ---
 hasil_col_main = next(
     (c for c in df.columns if c.lower() == "hasil" or "status" in c.lower()),
     None,
 )
 
 if not df.empty and hasil_col_main:
-    if "active_view" not in st.session_state:
-        st.session_state.active_view = "ALL"
-
     total_lamaran = len(df)
     pending_df = df[
         df[hasil_col_main].str.contains(
@@ -510,7 +498,7 @@ if not df.empty and hasil_col_main:
     lolos_count = len(lolos_df)
     gagal_count = len(gagal_df)
 
-    # 4 Kolom Kartu Metrik Estetik Berwarna
+    # 1. 4 Kolom Kartu Metrik Estetik Berwarna
     col_m1, col_m2, col_m3, col_m4 = st.columns(4)
 
     with col_m1:
@@ -523,9 +511,6 @@ if not df.empty and hasil_col_main:
         """,
             unsafe_allow_html=True,
         )
-        if st.button("👉 Pilih Semua", key="b_all", use_container_width=True):
-            st.session_state.active_view = "ALL"
-            st.rerun()
 
     with col_m2:
         st.markdown(
@@ -537,11 +522,6 @@ if not df.empty and hasil_col_main:
         """,
             unsafe_allow_html=True,
         )
-        if st.button(
-            "👉 Pilih Pending", key="b_pen", use_container_width=True
-        ):
-            st.session_state.active_view = "PENDING"
-            st.rerun()
 
     with col_m3:
         st.markdown(
@@ -553,9 +533,6 @@ if not df.empty and hasil_col_main:
         """,
             unsafe_allow_html=True,
         )
-        if st.button("👉 Pilih Lolos", key="b_lol", use_container_width=True):
-            st.session_state.active_view = "LOLOS"
-            st.rerun()
 
     with col_m4:
         st.markdown(
@@ -567,172 +544,57 @@ if not df.empty and hasil_col_main:
         """,
             unsafe_allow_html=True,
         )
-        if st.button("👉 Pilih Gagal", key="b_gag", use_container_width=True):
-            st.session_state.active_view = "GAGAL"
-            st.rerun()
 
-    current_mode = st.session_state.active_view
+    # 2. Baris Tombol Detail di Bawah Kartu Metrik (Sesuai Gambar Referensi)
+    col_b1, col_b2, col_b3, col_b4 = st.columns(4)
 
-    pcol1, pcol2, pcol3, pcol4 = st.columns(4)
-    with pcol1:
-        popup_all = st.button(
-            "📁 Detail Semua", use_container_width=True, key="pop_all"
-        )
-    with pcol2:
-        popup_pending = st.button(
-            "⏳ Detail Pending", use_container_width=True, key="pop_pen"
-        )
-    with pcol3:
-        popup_lolos = st.button(
-            "✅ Detail Lolos", use_container_width=True, key="pop_lol"
-        )
-    with pcol4:
-        popup_gagal = st.button(
-            "❌ Detail Gagal", use_container_width=True, key="pop_gag"
-        )
+    with col_b1:
+        btn_detail_semua = st.button("📁 Detail Semua")
+    with col_b2:
+        btn_detail_pending = st.button("⏳ Detail Pending")
+    with col_b3:
+        btn_detail_lolos = st.button("✅ Detail Lolos")
+    with col_b4:
+        btn_detail_gagal = st.button("❌ Detail Gagal")
 
+    # Logika Tampilan Dialog/Popup Berdasarkan Tombol Detail yang Ditekan
+    if btn_detail_semua:
+        @st.dialog("📁 Rincian Semua Lamaran", width="large")
+        def show_all():
+            st.dataframe(df, use_container_width=True)
+        show_all()
 
-    def safe_display_df(data_frame):
-        cols_to_show = [
-            c
-            for c in data_frame.columns
-            if c != "Display_List" and c != "Display_Label"
-        ]
-        st.dataframe(data_frame[cols_to_show], use_container_width=True)
+    elif btn_detail_pending:
+        @st.dialog("⏳ Rincian Lamaran Pending", width="large")
+        def show_pending():
+            if not pending_df.empty:
+                st.dataframe(pending_df, use_container_width=True)
+            else:
+                st.info("Tidak ada data lamaran yang berstatus pending.")
+        show_pending()
 
+    elif btn_detail_lolos:
+        @st.dialog("✅ Rincian Lamaran Lolos", width="large")
+        def show_lolos():
+            if not lolos_df.empty:
+                st.dataframe(lolos_df, use_container_width=True)
+            else:
+                st.info("Tidak ada data lamaran yang berstatus lolos.")
+        show_lolos()
 
-    @st.dialog("📊 Ringkasan Keseluruhan Lamaran", width="large")
-    def show_all_summary():
-        st.write(f"### Total Perusahaan Dilamar: **{total_lamaran}**")
-        safe_display_df(df)
-
-
-    @st.dialog("⏳ Daftar Lamaran Tahap Pending / Proses", width="large")
-    def show_pending_list():
-        st.write(
-            f"Total data pending saat ini: **{pending_count}** perusahaan"
-        )
-        if not pending_df.empty:
-            safe_display_df(pending_df)
-        else:
-            st.info("Tidak ada data lamaran dengan status pending.")
-
-
-    @st.dialog("✅ Daftar Lamaran Tahap Lolos / Berhasil", width="large")
-    def show_lolos_list():
-        st.write(
-            f"Total data lolos saat ini: **{lolos_count}** perusahaan 🎉"
-        )
-        if not lolos_df.empty:
-            safe_display_df(lolos_df)
-        else:
-            st.info("Belum ada data lamaran yang lolos.")
-
-
-    @st.dialog("❌ Daftar Lamaran Tahap Gagal / Ditolak", width="large")
-    def show_gagal_list():
-        st.write(f"Total data gagal saat ini: **{gagal_count}** perusahaan")
-        if not gagal_df.empty:
-            safe_display_df(gagal_df)
-        else:
-            st.info("Tidak ada data lamaran yang gagal.")
-
-
-    if popup_all:
-        show_all_summary()
-    elif popup_pending:
-        show_pending_list()
-    elif popup_lolos:
-        show_lolos_list()
-    elif popup_gagal:
-        show_gagal_list()
+    elif btn_detail_gagal:
+        @st.dialog("❌ Rincian Lamaran Gagal", width="large")
+        def show_gagal():
+            if not gagal_df.empty:
+                st.dataframe(gagal_df, use_container_width=True)
+            else:
+                st.info("Tidak ada data lamaran yang berstatus gagal.")
+        show_gagal()
 
     st.markdown("<br>", unsafe_allow_html=True)
-
-    # --- BAGIAN GRAFIK INTERAKTIF DINAMIS ---
-    if current_mode == "ALL":
-        st.subheader("📊 Analisis & Statistik Distribusi (Semua Lamaran)")
-    elif current_mode == "PENDING":
-        st.subheader(
-            "⏳ Analisis & Statistik Distribusi (Khusus Pending / Proses)"
-        )
-    elif current_mode == "LOLOS":
-        st.subheader(
-            "✅ Analisis & Statistik Distribusi (Khusus Lolos / Berhasil)"
-        )
-    elif current_mode == "GAGAL":
-        st.subheader(
-            "❌ Analisis & Statistik Distribusi (Khusus Gagal / Ditolak)"
-        )
-
-    gcol1, gcol2 = st.columns(2)
-
-    if current_mode == "PENDING":
-        active_chart_df = pending_df
-    elif current_mode == "LOLOS":
-        active_chart_df = lolos_df
-    elif current_mode == "GAGAL":
-        active_chart_df = gagal_df
-    else:
-        active_chart_df = df
-
-    with gcol1:
-        if not active_chart_df.empty and hasil_col_main:
-            fig_status = px.pie(
-                active_chart_df,
-                names=hasil_col_main,
-                title=f"Proporsi Status ({current_mode})",
-                hole=0.5,
-                color_discrete_sequence=px.colors.qualitative.Pastel,
-            )
-            fig_status.update_traces(
-                textinfo="none",
-                hoverinfo="label+percent+value",
-                rotation=45,
-            )
-            fig_status.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)",
-                font_color="white",
-                plot_bgcolor="rgba(0,0,0,0)",
-                title_font_size=16,
-                transition_duration=1000,
-            )
-            st.plotly_chart(fig_status, use_container_width=True)
-        else:
-            st.info(f"Tidak ada data untuk kategori {current_mode}.")
-
-    with gcol2:
-        platform_col = next(
-            (
-                c
-                for c in active_chart_df.columns
-                if "nemu loker" in c.lower() or "sumber" in c.lower()
-            ),
-            None,
-        )
-        if not active_chart_df.empty and platform_col:
-            fig_platform = px.bar(
-                active_chart_df,
-                x=platform_col,
-                title=f"Sumber Platform Loker ({current_mode})",
-                color=platform_col,
-                color_discrete_sequence=px.colors.qualitative.Bold,
-            )
-            fig_platform.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)",
-                font_color="white",
-                plot_bgcolor="rgba(0,0,0,0)",
-                title_font_size=16,
-                showlegend=False,
-                transition_duration=1000,
-            )
-            st.plotly_chart(fig_platform, use_container_width=True)
-        else:
-            st.info(f"Tidak ada data platform untuk kategori {current_mode}.")
-
     st.markdown("---")
 
-    # --- BAGIAN FILTER & TABEL KESELURUHAN ---
+    # --- BAGIAN FILTER & TABEL UTAMA ---
     st.subheader("📋 Data Keseluruhan Lamaran Kerja")
 
     fcol1, fcol2, fcol3 = st.columns(3)
@@ -808,5 +670,5 @@ if not df.empty and hasil_col_main:
 
 else:
     st.info(
-        "🚀 Belum ada data atau kolom 'Hasil' tidak terbaca di Google Sheets. Pastikan baris pertama Google Sheets berisi nama kolom yang sesuai."
+        "🚀 Belum ada data atau kolom 'Hasil' tidak terbaca di Google Sheets."
     )
