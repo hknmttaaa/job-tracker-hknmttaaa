@@ -127,60 +127,261 @@ except Exception as e:
     )
     df = pd.DataFrame()
 
-# Sidebar untuk Input Data Baru
-st.sidebar.markdown("<h2>📝 Panel Input Loker</h2>", unsafe_allow_html=True)
-with st.sidebar.form("add_form", clear_on_submit=True):
-    sosmed = st.text_input("Sosial Media Perusahaan")
-    perusahaan = st.text_input("Nama Perusahaan*")
-    tgl_lamar = st.date_input("Tanggal Lamar", datetime.today())
-    jenis_lamaran = st.selectbox("Jenis Lamaran", ["Gform", "Website", "Email"])
-    posisi = st.text_input("Posisi*")
-    dokumen_via = st.selectbox("Dokumen Via", ["Gform", "Website", "Email"])
-    nemu_loker = st.selectbox(
-        "Nemu Loker Di",
-        ["LinkedIn", "Jobstreet", "Instagram", "Telegram", "Lainnya"],
-    )
-    durasi_kontrak = st.text_input("Durasi Kontrak (Cth: 1 Tahun / Tetap)")
-    jenis_kerja = st.selectbox("Jenis Kerja", ["Hybrid", "WFO", "WFH"])
-    tgl_pengumuman = st.date_input(
-        "Tanggal Pengumuman Berakhir", datetime.today()
-    )
-    hasil = st.selectbox(
-        "Status / Hasil",
-        [
-            "PENDING / MENUNGGU",
-            "LOLOS ADMINISTRASI",
-            "LOLOS WAWANCARA HRD",
-            "LOLOS WAWANCARA USER",
-            "LOLOS (BERHASIL)",
-            "TIDAK LOLOS",
-        ],
-    )
-    evaluasi = st.text_area("Evaluasi / Catatan")
+# --- SIDEBAR: NAVIGASI MENU (INPUT, EDIT, DELETE) ---
+st.sidebar.markdown("<h2>⚙️ Menu Panel</h2>", unsafe_allow_html=True)
+menu_mode = st.sidebar.radio(
+    "Pilih Aksi", ["➕ Tambah Data Baru", "✏️ Edit / 🗑️ Hapus Data"]
+)
 
-    submit_button = st.form_submit_button(label="Simpan ke Google Sheets 🚀")
+# 1. FORM TAMBAH DATA BARU
+if menu_mode == "➕ Tambah Data Baru":
+    st.sidebar.markdown("<h3>📝 Panel Input Loker</h3>", unsafe_allow_html=True)
+    with st.sidebar.form("add_form", clear_on_submit=True):
+        sosmed = st.text_input("Sosial Media Perusahaan")
+        perusahaan = st.text_input("Nama Perusahaan*")
+        tgl_lamar = st.date_input("Tanggal Lamar", datetime.today())
+        jenis_lamaran = st.selectbox(
+            "Jenis Lamaran", ["Gform", "Website", "Email"]
+        )
+        posisi = st.text_input("Posisi*")
+        dokumen_via = st.selectbox("Dokumen Via", ["Gform", "Website", "Email"])
+        nemu_loker = st.selectbox(
+            "Nemu Loker Di",
+            ["LinkedIn", "Jobstreet", "Instagram", "Telegram", "Lainnya"],
+        )
+        durasi_kontrak = st.text_input("Durasi Kontrak (Cth: 1 Tahun / Tetap)")
+        jenis_kerja = st.selectbox("Jenis Kerja", ["Hybrid", "WFO", "WFH"])
+        tgl_pengumuman = st.date_input(
+            "Tanggal Pengumuman Berakhir", datetime.today()
+        )
+        hasil = st.selectbox(
+            "Status / Hasil",
+            [
+                "PENDING / MENUNGGU",
+                "LOLOS ADMINISTRASI",
+                "LOLOS WAWANCARA HRD",
+                "LOLOS WAWANCARA USER",
+                "LOLOS (BERHASIL)",
+                "TIDAK LOLOS",
+            ],
+        )
+        evaluasi = st.text_area("Evaluasi / Catatan")
 
-    if submit_button:
-        if perusahaan and posisi:
-            new_row = [
-                sosmed,
-                perusahaan,
-                str(tgl_lamar),
-                jenis_lamaran,
-                posisi,
-                dokumen_via,
-                nemu_loker,
-                durasi_kontrak,
-                jenis_kerja,
-                str(tgl_pengumuman),
-                hasil,
-                evaluasi,
+        submit_button = st.form_submit_button(label="Simpan ke Google Sheets 🚀")
+
+        if submit_button:
+            if perusahaan and posisi:
+                new_row = [
+                    sosmed,
+                    perusahaan,
+                    str(tgl_lamar),
+                    jenis_lamaran,
+                    posisi,
+                    dokumen_via,
+                    nemu_loker,
+                    durasi_kontrak,
+                    jenis_kerja,
+                    str(tgl_pengumuman),
+                    hasil,
+                    evaluasi,
+                ]
+                sheet.append_row(new_row)
+                st.success(f"Berhasil menyimpan lamaran untuk {perusahaan}!")
+                st.rerun()
+            else:
+                st.warning("Nama Perusahaan dan Posisi wajib diisi!")
+
+# 2. FORM EDIT & HAPUS DATA
+elif menu_mode == "✏️ Edit / 🗑️ Hapus Data":
+    st.sidebar.markdown(
+        "<h3>✏️ Panel Edit & Hapus Loker</h3>", unsafe_allow_html=True
+    )
+    if not df.empty and "Perusahaan" in df.columns:
+        # Membuat pilihan unik berdasarkan Perusahaan dan Posisi
+        df["Display_Label"] = (
+            df.index.astype(str)
+            + ". "
+            + df["Perusahaan"].astype(str)
+            + " - "
+            + df["Posisi"].astype(str)
+        )
+        selected_item = st.sidebar.selectbox(
+            "Pilih Data yang Ingin Diubah/Hapus", df["Display_Label"]
+        )
+
+        # Ambil index baris yang dipilih (ingat: baris di Sheets = index pandas + 2 karena header)
+        selected_idx = int(selected_item.split(".")[0])
+        row_data = df.iloc[selected_idx]
+
+        with st.sidebar.form("edit_delete_form"):
+            st.write(
+                f"**Mengubah Data:** {row_data['Perusahaan']} ({row_data['Posisi']})"
+            )
+
+            e_sosmed = st.text_input(
+                "Sosial Media Perusahaan",
+                value=str(row_data.get("Sosial Media Perusahaan", "")),
+            )
+            e_perusahaan = st.text_input(
+                "Nama Perusahaan*", value=str(row_data.get("Perusahaan", ""))
+            )
+
+            # Parsing tanggal lama jika ada
+            try:
+                default_date_lamar = datetime.strptime(
+                    str(row_data.get("Tanggal Lamar", "")), "%Y-%m-%d"
+                ).date()
+            except:
+                default_date_lamar = datetime.today()
+
+            e_tgl_lamar = st.date_input(
+                "Tanggal Lamar", value=default_date_lamar
+            )
+
+            jl_options = ["Gform", "Website", "Email"]
+            def_jl = (
+                row_data.get("Jenis Lamaran", "Gform")
+                if row_data.get("Jenis Lamaran") in jl_options
+                else "Gform"
+            )
+            e_jenis_lamaran = st.selectbox(
+                "Jenis Lamaran",
+                jl_options,
+                index=jl_options.index(def_jl),
+            )
+
+            e_posisi = st.text_input(
+                "Posisi*", value=str(row_data.get("Posisi", ""))
+            )
+
+            dv_options = ["Gform", "Website", "Email"]
+            def_dv = (
+                row_data.get("Dokumen Via", "Gform")
+                if row_data.get("Dokumen Via") in dv_options
+                else "Gform"
+            )
+            e_dokumen_via = st.selectbox(
+                "Dokumen Via",
+                dv_options,
+                index=dv_options.index(def_dv),
+            )
+
+            nl_options = [
+                "LinkedIn",
+                "Jobstreet",
+                "Instagram",
+                "Telegram",
+                "Lainnya",
             ]
-            sheet.append_row(new_row)
-            st.success(f"Berhasil menyimpan lamaran untuk {perusahaan}!")
-            st.rerun()
-        else:
-            st.warning("Nama Perusahaan dan Posisi wajib diisi!")
+            def_nl = (
+                row_data.get("Nemu Loker Di", "LinkedIn")
+                if row_data.get("Nemu Loker Di") in nl_options
+                else "LinkedIn"
+            )
+            e_nemu_loker = st.selectbox(
+                "Nemu Loker Di",
+                nl_options,
+                index=nl_options.index(def_nl),
+            )
+
+            e_durasi_kontrak = st.text_input(
+                "Durasi Kontrak",
+                value=str(row_data.get("Durasi Kontrak", "")),
+            )
+
+            jk_options = ["Hybrid", "WFO", "WFH"]
+            def_jk = (
+                row_data.get("Jenis Kerja", "Hybrid")
+                if row_data.get("Jenis Kerja") in jk_options
+                else "Hybrid"
+            )
+            e_jenis_kerja = st.selectbox(
+                "Jenis Kerja",
+                jk_options,
+                index=jk_options.index(def_jk),
+            )
+
+            try:
+                default_date_pengumuman = datetime.strptime(
+                    str(row_data.get("Tanggal Pengumuman Berakhir", "")),
+                    "%Y-%m-%d",
+                ).date()
+            except:
+                default_date_pengumuman = datetime.today()
+
+            e_tgl_pengumuman = st.date_input(
+                "Tanggal Pengumuman Berakhir", value=default_date_pengumuman
+            )
+
+            hasil_options = [
+                "PENDING / MENUNGGU",
+                "LOLOS ADMINISTRASI",
+                "LOLOS WAWANCARA HRD",
+                "LOLOS WAWANCARA USER",
+                "LOLOS (BERHASIL)",
+                "TIDAK LOLOS",
+            ]
+            def_hasil = (
+                row_data.get("Hasil", "PENDING / MENUNGGU")
+                if row_data.get("Hasil") in hasil_options
+                else "PENDING / MENUNGGU"
+            )
+            e_hasil = st.selectbox(
+                "Status / Hasil",
+                hasil_options,
+                index=hasil_options.index(def_hasil),
+            )
+
+            e_evaluasi = st.text_area(
+                "Evaluasi / Catatan",
+                value=str(row_data.get("Evaluasi / Catatan", "")),
+            )
+
+            col_sub1, col_sub2 = st.columns(2)
+            update_btn = col_sub1.form_submit_button(label="💾 Update Data")
+            delete_btn = col_sub2.form_submit_button(label="🗑️ Hapus Data")
+
+            sheet_row_number = (
+                selected_idx + 2
+            )  # Karena index pandas mulai dari 0 + header di baris 1
+
+            if update_btn:
+                if e_perusahaan and e_posisi:
+                    updated_row = [
+                        e_sosmed,
+                        e_perusahaan,
+                        str(e_tgl_lamar),
+                        e_jenis_lamaran,
+                        e_posisi,
+                        e_dokumen_via,
+                        e_nemu_loker,
+                        e_durasi_kontrak,
+                        e_jenis_kerja,
+                        str(e_tgl_pengumuman),
+                        e_hasil,
+                        e_evaluasi,
+                    ]
+                    # Update baris di Google Sheets (kolom A sampai L)
+                    sheet.update(
+                        f"A{sheet_row_number}:L{sheet_row_number}",
+                        [updated_row],
+                    )
+                    st.success(
+                        f"Berhasil memperbarui data untuk {e_perusahaan}!"
+                    )
+                    st.rerun()
+                else:
+                    st.warning("Nama Perusahaan dan Posisi wajib diisi!")
+
+            if delete_btn:
+                sheet.delete_rows(sheet_row_number)
+                st.success(
+                    f"Berhasil menghapus data lamaran untuk {row_data['Perusahaan']}!"
+                )
+                st.rerun()
+    else:
+        st.sidebar.info("Tidak ada data untuk diedit.")
+
 
 # --- DASHBOARD UTAMA ---
 if not df.empty and "Hasil" in df.columns:
@@ -501,6 +702,10 @@ if not df.empty and "Hasil" in df.columns:
         filtered_df = filtered_df[
             filtered_df["Jenis Kerja"] == selected_work_type
         ]
+
+    # Hapus kolom helper tampilan agar tidak ikut tampil di dataframe utama
+    if "Display_Label" in filtered_df.columns:
+        filtered_df = filtered_df.drop(columns=["Display_Label"])
 
     st.dataframe(filtered_df, use_container_width=True)
     st.caption(
