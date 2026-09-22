@@ -11,7 +11,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Styling Umum & Kartu Metrik Estetik Berwarna
+# Custom CSS: Styling Umum & Penyesuaian Ukuran Tombol Detail agar Proporsional
 st.markdown(
     """
     <style>
@@ -68,18 +68,25 @@ st.markdown(
         color: white;
     }
 
+    /* Perbaikan ukuran tombol agar proporsional dan tidak pendek */
     .stButton > button {
         background-color: #1e293b !important;
         color: #e2e8f0 !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
         font-weight: 600 !important;
         width: 100% !important;
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+        border-radius: 10px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease-in-out;
     }
     
     .stButton > button:hover {
         background-color: #334155 !important;
         color: #ffffff !important;
         border-color: #38bdf8 !important;
+        transform: translateY(-2px);
     }
     </style>
 """,
@@ -545,7 +552,10 @@ if not df.empty and hasil_col_main:
             unsafe_allow_html=True,
         )
 
-    # 2. Baris Tombol Detail di Bawah Kartu Metrik (Sesuai Gambar Referensi)
+    # Spasi kecil agar tidak terlalu mepet kartu metrik
+    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+
+    # 2. Baris Tombol Detail di Bawah Kartu Metrik (Ukuran Proporsional)
     col_b1, col_b2, col_b3, col_b4 = st.columns(4)
 
     with col_b1:
