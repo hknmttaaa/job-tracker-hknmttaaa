@@ -37,7 +37,6 @@ st.markdown(
         margin-bottom: 25px;
     }
 
-    /* Desain Kartu Metrik Custom HTML */
     .custom-card {
         padding: 20px;
         border-radius: 14px;
@@ -70,7 +69,6 @@ st.markdown(
         color: white;
     }
 
-    /* Styling Tombol Standar Streamlit di Bawahnya */
     .stButton > button {
         background-color: #1e293b !important;
         color: #e2e8f0 !important;
@@ -113,14 +111,17 @@ def init_connection():
     return client
 
 
-# Ambil Data dari Spreadsheet
+# Ambil Data dari Spreadsheet dengan Penanganan Kolom yang Fleksibel
 try:
     client = init_connection()
     sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
     sheet = client.open_by_url(sheet_url).worksheet("Sheet1")
     data = sheet.get_all_records()
     df = pd.DataFrame(data)
-    df.columns = df.columns.str.strip()
+
+    if not df.empty:
+        # Bersihkan spasi di nama kolom agar seragam
+        df.columns = df.columns.astype(str).str.strip()
 except Exception as e:
     st.error(
         f"Gagal terhubung ke Google Sheets. Pastikan format Secrets benar. Error: {e}"
@@ -196,207 +197,313 @@ elif menu_mode == "✏️ Edit / 🗑️ Hapus Data":
     st.sidebar.markdown(
         "<h3>✏️ Panel Edit & Hapus Loker</h3>", unsafe_allow_html=True
     )
-    if not df.empty and "Perusahaan" in df.columns:
-        # Membuat pilihan unik berdasarkan Perusahaan dan Posisi
-        df["Display_Label"] = (
-            df.index.astype(str)
-            + ". "
-            + df["Perusahaan"].astype(str)
-            + " - "
-            + df["Posisi"].astype(str)
+
+    if not df.empty:
+        # Cari kolom perusahaan secara dinamis (mengantisipasi perbedaan huruf kapital)
+        col_perusahaan = next(
+            (
+                c
+                for c in df.columns
+                if "perusahaan" in c.lower() or "company" in c.lower()
+            ),
+            None,
         )
-        selected_item = st.sidebar.selectbox(
-            "Pilih Data yang Ingin Diubah/Hapus", df["Display_Label"]
+        col_posisi = next(
+            (
+                c
+                for c in df.columns
+                if "posisi" in c.lower() or "position" in c.lower()
+            ),
+            None,
         )
 
-        # Ambil index baris yang dipilih (ingat: baris di Sheets = index pandas + 2 karena header)
-        selected_idx = int(selected_item.split(".")[0])
-        row_data = df.iloc[selected_idx]
-
-        with st.sidebar.form("edit_delete_form"):
-            st.write(
-                f"**Mengubah Data:** {row_data['Perusahaan']} ({row_data['Posisi']})"
+        if col_perusahaan:
+            # Buat label pilihan unik untuk dropdown
+            df["Display_Label"] = (
+                df.index.astype(str)
+                + ". "
+                + df[col_perusahaan].astype(str)
+                + (
+                    " - " + df[col_posisi].astype(str)
+                    if col_posisi
+                    else ""
+                )
             )
 
-            e_sosmed = st.text_input(
-                "Sosial Media Perusahaan",
-                value=str(row_data.get("Sosial Media Perusahaan", "")),
+            selected_item = st.sidebar.selectbox(
+                "Pilih Data yang Ingin Diubah/Hapus", df["Display_Label"]
             )
-            e_perusahaan = st.text_input(
-                "Nama Perusahaan*", value=str(row_data.get("Perusahaan", ""))
-            )
+            selected_idx = int(selected_item.split(".")[0])
+            row_data = df.iloc[selected_idx]
 
-            # Parsing tanggal lama jika ada
-            try:
-                default_date_lamar = datetime.strptime(
-                    str(row_data.get("Tanggal Lamar", "")), "%Y-%m-%d"
-                ).date()
-            except:
-                default_date_lamar = datetime.today()
+            with st.sidebar.form("edit_delete_form"):
+                p_val = (
+                    str(row_data.get(col_perusahaan, ""))
+                    if col_perusahaan
+                    else ""
+                )
+                pos_val = (
+                    str(row_data.get(col_posisi, "")) if col_posisi else ""
+                )
+                st.write(f"**Mengubah Data:** {p_val} ({pos_val})")
 
-            e_tgl_lamar = st.date_input(
-                "Tanggal Lamar", value=default_date_lamar
-            )
+                e_sosmed = st.text_input(
+                    "Sosial Media Perusahaan",
+                    value=str(
+                        row_data.get(
+                            next(
+                                (
+                                    c
+                                    for c in df.columns
+                                    if "sosmed" in c.lower()
+                                    or "sosial" in c.lower()
+                                ),
+                                "",
+                            ),
+                            "",
+                        )
+                    ),
+                )
+                e_perusahaan = st.text_input(
+                    "Nama Perusahaan*", value=p_val
+                )
 
-            jl_options = ["Gform", "Website", "Email"]
-            def_jl = (
-                row_data.get("Jenis Lamaran", "Gform")
-                if row_data.get("Jenis Lamaran") in jl_options
-                else "Gform"
-            )
-            e_jenis_lamaran = st.selectbox(
-                "Jenis Lamaran",
-                jl_options,
-                index=jl_options.index(def_jl),
-            )
+                # Tanggal Lamar
+                tgl_lamar_col = next(
+                    (
+                        c
+                        for c in df.columns
+                        if "tanggal lamar" in c.lower()
+                        or "tgl lamar" in c.lower()
+                    ),
+                    None,
+                )
+                try:
+                    default_date_lamar = datetime.strptime(
+                        str(row_data.get(tgl_lamar_col, "")), "%Y-%m-%d"
+                    ).date()
+                except:
+                    default_date_lamar = datetime.today()
+                e_tgl_lamar = st.date_input(
+                    "Tanggal Lamar", value=default_date_lamar
+                )
 
-            e_posisi = st.text_input(
-                "Posisi*", value=str(row_data.get("Posisi", ""))
-            )
+                jl_options = ["Gform", "Website", "Email"]
+                jl_col = next(
+                    (c for c in df.columns if "jenis lamaran" in c.lower()),
+                    None,
+                )
+                def_jl = (
+                    row_data.get(jl_col, "Gform")
+                    if jl_col and row_data.get(jl_col) in jl_options
+                    else "Gform"
+                )
+                e_jenis_lamaran = st.selectbox(
+                    "Jenis Lamaran",
+                    jl_options,
+                    index=jl_options.index(def_jl),
+                )
 
-            dv_options = ["Gform", "Website", "Email"]
-            def_dv = (
-                row_data.get("Dokumen Via", "Gform")
-                if row_data.get("Dokumen Via") in dv_options
-                else "Gform"
-            )
-            e_dokumen_via = st.selectbox(
-                "Dokumen Via",
-                dv_options,
-                index=dv_options.index(def_dv),
-            )
+                e_posisi = st.text_input("Posisi*", value=pos_val)
 
-            nl_options = [
-                "LinkedIn",
-                "Jobstreet",
-                "Instagram",
-                "Telegram",
-                "Lainnya",
-            ]
-            def_nl = (
-                row_data.get("Nemu Loker Di", "LinkedIn")
-                if row_data.get("Nemu Loker Di") in nl_options
-                else "LinkedIn"
-            )
-            e_nemu_loker = st.selectbox(
-                "Nemu Loker Di",
-                nl_options,
-                index=nl_options.index(def_nl),
-            )
+                dv_options = ["Gform", "Website", "Email"]
+                dv_col = next(
+                    (c for c in df.columns if "dokumen via" in c.lower()), None
+                )
+                def_dv = (
+                    row_data.get(dv_col, "Gform")
+                    if dv_col and row_data.get(dv_col) in dv_options
+                    else "Gform"
+                )
+                e_dokumen_via = st.selectbox(
+                    "Dokumen Via",
+                    dv_options,
+                    index=dv_options.index(def_dv),
+                )
 
-            e_durasi_kontrak = st.text_input(
-                "Durasi Kontrak",
-                value=str(row_data.get("Durasi Kontrak", "")),
-            )
+                nl_options = [
+                    "LinkedIn",
+                    "Jobstreet",
+                    "Instagram",
+                    "Telegram",
+                    "Lainnya",
+                ]
+                nl_col = next(
+                    (
+                        c
+                        for c in df.columns
+                        if "nemu loker" in c.lower() or "sumber" in c.lower()
+                    ),
+                    None,
+                )
+                def_nl = (
+                    row_data.get(nl_col, "LinkedIn")
+                    if nl_col and row_data.get(nl_col) in nl_options
+                    else "LinkedIn"
+                )
+                e_nemu_loker = st.selectbox(
+                    "Nemu Loker Di",
+                    nl_options,
+                    index=nl_options.index(def_nl),
+                )
 
-            jk_options = ["Hybrid", "WFO", "WFH"]
-            def_jk = (
-                row_data.get("Jenis Kerja", "Hybrid")
-                if row_data.get("Jenis Kerja") in jk_options
-                else "Hybrid"
-            )
-            e_jenis_kerja = st.selectbox(
-                "Jenis Kerja",
-                jk_options,
-                index=jk_options.index(def_jk),
-            )
+                dur_col = next(
+                    (c for c in df.columns if "durasi kontrak" in c.lower()),
+                    None,
+                )
+                e_durasi_kontrak = st.text_input(
+                    "Durasi Kontrak",
+                    value=str(row_data.get(dur_col, "")) if dur_col else "",
+                )
 
-            try:
-                default_date_pengumuman = datetime.strptime(
-                    str(row_data.get("Tanggal Pengumuman Berakhir", "")),
-                    "%Y-%m-%d",
-                ).date()
-            except:
-                default_date_pengumuman = datetime.today()
+                jk_options = ["Hybrid", "WFO", "WFH"]
+                jk_col = next(
+                    (c for c in df.columns if "jenis kerja" in c.lower()), None
+                )
+                def_jk = (
+                    row_data.get(jk_col, "Hybrid")
+                    if jk_col and row_data.get(jk_col) in jk_options
+                    else "Hybrid"
+                )
+                e_jenis_kerja = st.selectbox(
+                    "Jenis Kerja",
+                    jk_options,
+                    index=jk_options.index(def_jk),
+                )
 
-            e_tgl_pengumuman = st.date_input(
-                "Tanggal Pengumuman Berakhir", value=default_date_pengumuman
-            )
+                tgl_pen_col = next(
+                    (
+                        c
+                        for c in df.columns
+                        if "pengumuman" in c.lower() or "berakhir" in c.lower()
+                    ),
+                    None,
+                )
+                try:
+                    default_date_pengumuman = datetime.strptime(
+                        str(row_data.get(tgl_pen_col, "")), "%Y-%m-%d"
+                    ).date()
+                except:
+                    default_date_pengumuman = datetime.today()
+                e_tgl_pengumuman = st.date_input(
+                    "Tanggal Pengumuman Berakhir",
+                    value=default_date_pengumuman,
+                )
 
-            hasil_options = [
-                "PENDING / MENUNGGU",
-                "LOLOS ADMINISTRASI",
-                "LOLOS WAWANCARA HRD",
-                "LOLOS WAWANCARA USER",
-                "LOLOS (BERHASIL)",
-                "TIDAK LOLOS",
-            ]
-            def_hasil = (
-                row_data.get("Hasil", "PENDING / MENUNGGU")
-                if row_data.get("Hasil") in hasil_options
-                else "PENDING / MENUNGGU"
-            )
-            e_hasil = st.selectbox(
-                "Status / Hasil",
-                hasil_options,
-                index=hasil_options.index(def_hasil),
-            )
+                hasil_options = [
+                    "PENDING / MENUNGGU",
+                    "LOLOS ADMINISTRASI",
+                    "LOLOS WAWANCARA HRD",
+                    "LOLOS WAWANCARA USER",
+                    "LOLOS (BERHASIL)",
+                    "TIDAK LOLOS",
+                ]
+                hasil_col = next(
+                    (
+                        c
+                        for c in df.columns
+                        if c.lower() == "hasil" or "status" in c.lower()
+                    ),
+                    None,
+                )
+                def_hasil = (
+                    row_data.get(hasil_col, "PENDING / MENUNGGU")
+                    if hasil_col
+                    and row_data.get(hasil_col) in hasil_options
+                    else "PENDING / MENUNGGU"
+                )
+                e_hasil = st.selectbox(
+                    "Status / Hasil",
+                    hasil_options,
+                    index=hasil_options.index(def_hasil),
+                )
 
-            e_evaluasi = st.text_area(
-                "Evaluasi / Catatan",
-                value=str(row_data.get("Evaluasi / Catatan", "")),
-            )
+                eval_col = next(
+                    (
+                        c
+                        for c in df.columns
+                        if "evaluasi" in c.lower() or "catatan" in c.lower()
+                    ),
+                    None,
+                )
+                e_evaluasi = st.text_area(
+                    "Evaluasi / Catatan",
+                    value=str(row_data.get(eval_col, "")) if eval_col else "",
+                )
 
-            col_sub1, col_sub2 = st.columns(2)
-            update_btn = col_sub1.form_submit_button(label="💾 Update Data")
-            delete_btn = col_sub2.form_submit_button(label="🗑️ Hapus Data")
+                col_sub1, col_sub2 = st.columns(2)
+                update_btn = col_sub1.form_submit_button(label="💾 Update Data")
+                delete_btn = col_sub2.form_submit_button(label="🗑️ Hapus Data")
 
-            sheet_row_number = (
-                selected_idx + 2
-            )  # Karena index pandas mulai dari 0 + header di baris 1
+                sheet_row_number = (
+                    selected_idx + 2
+                )  # Baris header di Sheets adalah 1
 
-            if update_btn:
-                if e_perusahaan and e_posisi:
-                    updated_row = [
-                        e_sosmed,
-                        e_perusahaan,
-                        str(e_tgl_lamar),
-                        e_jenis_lamaran,
-                        e_posisi,
-                        e_dokumen_via,
-                        e_nemu_loker,
-                        e_durasi_kontrak,
-                        e_jenis_kerja,
-                        str(e_tgl_pengumuman),
-                        e_hasil,
-                        e_evaluasi,
-                    ]
-                    # Update baris di Google Sheets (kolom A sampai L)
-                    sheet.update(
-                        f"A{sheet_row_number}:L{sheet_row_number}",
-                        [updated_row],
-                    )
+                if update_btn:
+                    if e_perusahaan and e_posisi:
+                        updated_row = [
+                            e_sosmed,
+                            e_perusahaan,
+                            str(e_tgl_lamar),
+                            e_jenis_lamaran,
+                            e_posisi,
+                            e_dokumen_via,
+                            e_nemu_loker,
+                            e_durasi_kontrak,
+                            e_jenis_kerja,
+                            str(e_tgl_pengumuman),
+                            e_hasil,
+                            e_evaluasi,
+                        ]
+                        sheet.update(
+                            f"A{sheet_row_number}:L{sheet_row_number}",
+                            [updated_row],
+                        )
+                        st.success(
+                            f"Berhasil memperbarui data untuk {e_perusahaan}!"
+                        )
+                        st.rerun()
+                    else:
+                        st.warning("Nama Perusahaan dan Posisi wajib diisi!")
+
+                if delete_btn:
+                    sheet.delete_rows(sheet_row_number)
                     st.success(
-                        f"Berhasil memperbarui data untuk {e_perusahaan}!"
+                        f"Berhasil menghapus data lamaran untuk {row_data[col_perusahaan]}!"
                     )
                     st.rerun()
-                else:
-                    st.warning("Nama Perusahaan dan Posisi wajib diisi!")
-
-            if delete_btn:
-                sheet.delete_rows(sheet_row_number)
-                st.success(
-                    f"Berhasil menghapus data lamaran untuk {row_data['Perusahaan']}!"
-                )
-                st.rerun()
+        else:
+            st.sidebar.warning(
+                "Kolom 'Perusahaan' tidak ditemukan di Google Sheets. Pastikan header baris pertama sudah benar."
+            )
     else:
-        st.sidebar.info("Tidak ada data untuk diedit.")
+        st.sidebar.info(
+            "Tidak ada data di Google Sheets atau spreadsheet masih kosong."
+        )
 
 
 # --- DASHBOARD UTAMA ---
-if not df.empty and "Hasil" in df.columns:
+# Cari kolom hasil secara fleksibel untuk dashboard
+hasil_col_main = next(
+    (c for c in df.columns if c.lower() == "hasil" or "status" in c.lower()),
+    None,
+)
+
+if not df.empty and hasil_col_main:
     if "active_view" not in st.session_state:
         st.session_state.active_view = "ALL"
 
     total_lamaran = len(df)
     pending_df = df[
-        df["Hasil"].str.contains("PENDING|MENUNGGU", case=False, na=False)
+        df[hasil_col_main].str.contains(
+            "PENDING|MENUNGGU", case=False, na=False
+        )
     ]
     lolos_df = df[
-        df["Hasil"].str.contains("LOLOS|BERHASIL", case=False, na=False)
+        df[hasil_col_main].str.contains("LOLOS|BERHASIL", case=False, na=False)
     ]
     gagal_df = df[
-        df["Hasil"].str.contains("TIDAK LOLOS|GAGAL", case=False, na=False)
+        df[hasil_col_main].str.contains("TIDAK LOLOS|GAGAL", case=False, na=False)
     ]
 
     pending_count = len(pending_df)
@@ -466,7 +573,6 @@ if not df.empty and "Hasil" in df.columns:
 
     current_mode = st.session_state.active_view
 
-    # Tombol kecil di bawahnya khusus untuk memunculkan pop-up detail data
     pcol1, pcol2, pcol3, pcol4 = st.columns(4)
     with pcol1:
         popup_all = st.button(
@@ -487,48 +593,17 @@ if not df.empty and "Hasil" in df.columns:
 
 
     def safe_display_df(data_frame):
-        available_cols = [
+        cols_to_show = [
             c
-            for c in [
-                "Perusahaan",
-                "Posisi",
-                "Tanggal Lamar",
-                "Nemu Loker Di",
-                "Jenis Lamaran",
-                "Hasil",
-            ]
-            if c in data_frame.columns
+            for c in data_frame.columns
+            if c != "Display_List" and c != "Display_Label"
         ]
-        if available_cols:
-            st.dataframe(
-                data_frame[available_cols], use_container_width=True
-            )
-        else:
-            st.dataframe(data_frame, use_container_width=True)
+        st.dataframe(data_frame[cols_to_show], use_container_width=True)
 
 
-    # --- POP-UP LIST DETAIL DATA ---
     @st.dialog("📊 Ringkasan Keseluruhan Lamaran", width="large")
     def show_all_summary():
         st.write(f"### Total Perusahaan Dilamar: **{total_lamaran}**")
-        col_s1, col_s2 = st.columns(2)
-        with col_s1:
-            st.write("📌 **Distribusi Jenis Lamaran:**")
-            if "Jenis Lamaran" in df.columns:
-                st.dataframe(
-                    df["Jenis Lamaran"].value_counts().reset_index(),
-                    use_container_width=True,
-                    hide_index=True,
-                )
-        with col_s2:
-            st.write("💼 **Daftar Posisi yang Dilamar:**")
-            if "Posisi" in df.columns:
-                st.dataframe(
-                    df["Posisi"].value_counts().reset_index(),
-                    use_container_width=True,
-                    hide_index=True,
-                )
-        st.write("📋 **Seluruh Data Perusahaan:**")
         safe_display_df(df)
 
 
@@ -602,10 +677,10 @@ if not df.empty and "Hasil" in df.columns:
         active_chart_df = df
 
     with gcol1:
-        if not active_chart_df.empty and "Hasil" in active_chart_df.columns:
+        if not active_chart_df.empty and hasil_col_main:
             fig_status = px.pie(
                 active_chart_df,
-                names="Hasil",
+                names=hasil_col_main,
                 title=f"Proporsi Status ({current_mode})",
                 hole=0.5,
                 color_discrete_sequence=px.colors.qualitative.Pastel,
@@ -627,15 +702,20 @@ if not df.empty and "Hasil" in df.columns:
             st.info(f"Tidak ada data untuk kategori {current_mode}.")
 
     with gcol2:
-        if (
-            not active_chart_df.empty
-            and "Nemu Loker Di" in active_chart_df.columns
-        ):
+        platform_col = next(
+            (
+                c
+                for c in active_chart_df.columns
+                if "nemu loker" in c.lower() or "sumber" in c.lower()
+            ),
+            None,
+        )
+        if not active_chart_df.empty and platform_col:
             fig_platform = px.bar(
                 active_chart_df,
-                x="Nemu Loker Di",
+                x=platform_col,
                 title=f"Sumber Platform Loker ({current_mode})",
-                color="Nemu Loker Di",
+                color=platform_col,
                 color_discrete_sequence=px.colors.qualitative.Bold,
             )
             fig_platform.update_layout(
@@ -663,18 +743,29 @@ if not df.empty and "Hasil" in df.columns:
             placeholder="Ketik nama...",
         )
 
+    platform_col_all = next(
+        (
+            c
+            for c in df.columns
+            if "nemu loker" in c.lower() or "sumber" in c.lower()
+        ),
+        None,
+    )
     with fcol2:
         platforms = (
-            ["Semua"] + list(df["Nemu Loker Di"].unique())
-            if "Nemu Loker Di" in df.columns
+            ["Semua"] + list(df[platform_col_all].unique())
+            if platform_col_all
             else ["Semua"]
         )
         selected_platform = st.selectbox("📌 Filter Sumber Platform", platforms)
 
+    work_type_col = next(
+        (c for c in df.columns if "jenis kerja" in c.lower()), None
+    )
     with fcol3:
         work_types = (
-            ["Semua"] + list(df["Jenis Kerja"].unique())
-            if "Jenis Kerja" in df.columns
+            ["Semua"] + list(df[work_type_col].unique())
+            if work_type_col
             else ["Semua"]
         )
         selected_work_type = st.selectbox("💼 Filter Jenis Kerja", work_types)
@@ -692,18 +783,21 @@ if not df.empty and "Hasil" in df.columns:
 
     if (
         selected_platform != "Semua"
-        and "Nemu Loker Di" in filtered_df.columns
+        and platform_col_all
+        and platform_col_all in filtered_df.columns
     ):
         filtered_df = filtered_df[
-            filtered_df["Nemu Loker Di"] == selected_platform
+            filtered_df[platform_col_all] == selected_platform
         ]
 
-    if selected_work_type != "Semua" and "Jenis Kerja" in filtered_df.columns:
-        filtered_df = filtered_df[
-            filtered_df["Jenis Kerja"] == selected_work_type
-        ]
+    if (
+        selected_work_type != "Semua"
+        and work_type_col
+        and work_type_col in filtered_df.columns
+    ):
+        filtered_df = filtered_df[filtered_df[work_type_col] == selected_work_type]
 
-    # Hapus kolom helper tampilan agar tidak ikut tampil di dataframe utama
+    # Hapus kolom helper tampilan agar tidak ikut tampil
     if "Display_Label" in filtered_df.columns:
         filtered_df = filtered_df.drop(columns=["Display_Label"])
 
@@ -714,5 +808,5 @@ if not df.empty and "Hasil" in df.columns:
 
 else:
     st.info(
-        "🚀 Belum ada data atau Google Sheets masih kosong. Silakan input data lamaran pertamamu lewat sidebar di sebelah kiri!"
+        "🚀 Belum ada data atau kolom 'Hasil' tidak terbaca di Google Sheets. Pastikan baris pertama Google Sheets berisi nama kolom yang sesuai."
     )
