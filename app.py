@@ -11,7 +11,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS: Memaksa tombol agar tinggi dan besar secara proporsional
+# Custom CSS: Lebar tombol disamakan persis selebar kartu di atasnya
 st.markdown(
     """
     <style>
@@ -47,7 +47,7 @@ st.markdown(
         justify-content: center;
         align-items: center;
         min-height: 90px;
-        margin-bottom: 5px;
+        margin-bottom: 0px;
     }
     .card-all { background: linear-gradient(135deg, #3498db, #2980b9); }
     .card-pending { background: linear-gradient(135deg, #f39c12, #d35400); }
@@ -68,7 +68,7 @@ st.markdown(
         color: white;
     }
 
-    /* Paksa tombol agar tinggi, besar, dan proporsional */
+    /* Memaksa tombol Streamlit agar lebar penuh (100%) dan tingginya proporsional */
     div.stButton > button {
         background-color: #1e293b !important;
         color: #e2e8f0 !important;
@@ -76,9 +76,9 @@ st.markdown(
         font-weight: 600 !important;
         width: 100% !important;
         min-height: 48px !important;
-        padding-top: 14px !important;
-        padding-bottom: 14px !important;
-        font-size: 15px !important;
+        padding-top: 12px !important;
+        padding-bottom: 12px !important;
+        font-size: 14px !important;
         border-radius: 12px !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         transition: all 0.2s ease-in-out;
@@ -555,52 +555,62 @@ if not df.empty and hasil_col_main:
         )
 
     # Spasi kecil agar tidak terlalu mepet kartu metrik
-    st.markdown("<div style='margin-top: 12px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
 
-    # 2. Baris Tombol Detail di Bawah Kartu Metrik (Ukuran Proporsional & Tinggi)
+    # 2. Baris Tombol Detail di Bawah Kartu Metrik (Lebar Penuh 100% Mengikuti Kolom Di Atasnya)
     col_b1, col_b2, col_b3, col_b4 = st.columns(4)
 
     with col_b1:
-        btn_detail_semua = st.button("📁 Detail Semua")
+        btn_detail_semua = st.button("📁 Detail Semua", use_container_width=True)
     with col_b2:
-        btn_detail_pending = st.button("⏳ Detail Pending")
+        btn_detail_pending = st.button(
+            "⏳ Detail Pending", use_container_width=True
+        )
     with col_b3:
-        btn_detail_lolos = st.button("✅ Detail Lolos")
+        btn_detail_lolos = st.button("✅ Detail Lolos", use_container_width=True)
     with col_b4:
-        btn_detail_gagal = st.button("❌ Detail Gagal")
+        btn_detail_gagal = st.button("❌ Detail Gagal", use_container_width=True)
 
     # Logika Tampilan Dialog/Popup Berdasarkan Tombol Detail yang Ditekan
     if btn_detail_semua:
+
         @st.dialog("📁 Rincian Semua Lamaran", width="large")
         def show_all():
             st.dataframe(df, use_container_width=True)
+
         show_all()
 
     elif btn_detail_pending:
+
         @st.dialog("⏳ Rincian Lamaran Pending", width="large")
         def show_pending():
             if not pending_df.empty:
                 st.dataframe(pending_df, use_container_width=True)
             else:
                 st.info("Tidak ada data lamaran yang berstatus pending.")
+
         show_pending()
 
     elif btn_detail_lolos:
+
         @st.dialog("✅ Rincian Lamaran Lolos", width="large")
         def show_lolos():
             if not lolos_df.empty:
                 st.dataframe(lolos_df, use_container_width=True)
             else:
                 st.info("Tidak ada data lamaran yang berstatus lolos.")
+
         show_lolos()
 
     elif btn_detail_gagal:
+
         @st.dialog("❌ Rincian Lamaran Gagal", width="large")
         def show_gagal():
             if not gagal_df.empty:
                 st.dataframe(gagal_df, use_container_width=True)
             else:
                 st.info("Tidak ada data lamaran yang berstatus gagal.")
+
         show_gagal()
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -669,7 +679,9 @@ if not df.empty and hasil_col_main:
         and work_type_col
         and work_type_col in filtered_df.columns
     ):
-        filtered_df = filtered_df[filtered_df[work_type_col] == selected_work_type]
+        filtered_df = filtered_df[
+            filtered_df[work_type_col] == selected_work_type
+        ]
 
     # Hapus kolom helper tampilan agar tidak ikut tampil
     if "Display_Label" in filtered_df.columns:
